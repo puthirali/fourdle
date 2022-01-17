@@ -1,4 +1,5 @@
 import * as React from "react"
+import {colors} from "@mui/material"
 import Box from "@mui/system/Box"
 import {Entry as EntryModel} from "../../models/entry"
 import {emptyChar, keyColor} from "../../models/key"
@@ -38,6 +39,9 @@ export const Entry: React.FC<EntryProps> = ({
       backgroundColor: isSolution
         ? keyColor("BULLSEYE", false)
         : "transparent",
+      borderColor: isSolution ? colors.grey[900] : "transparent",
+      borderWidth: isSolution ? "4px" : "0px",
+      borderStyle: "solid",
     }}
   >
     {[0, 1, 2, 3, 4].map((index) => (
