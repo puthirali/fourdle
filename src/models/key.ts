@@ -160,7 +160,7 @@ export function keyColor(mode: KeyMode, makeAccessible: boolean) {
     case "HIT":
       return makeAccessible
         ? colors.deepPurple[900]
-        : colors.orange[900]
+        : colors.yellow[900]
   }
 }
 

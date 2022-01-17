@@ -128,29 +128,36 @@ export function normalizeDist(
 ): readonly Dist[] {
   return pipe(
     dist,
-    A.map((d) =>
+    A.reduce([] as readonly Dist[], (ds, d) =>
       pipe(
         d,
         // 1. If its not a hit, take it
         // 2. If it is a hit, if its not a dupe, take it
         // 3. If the solution dist has a dupe, take it
-        // 4. Take it as a miss
-        when((d) => d.mode !== "HIT", identity),
-        when((d) => d.mode === "HIT" && dist.length === 1, identity),
+        // 4. If it is the first one, take it
+        // 5. Take it as a miss
         when(
           (d) =>
-            d.mode === "HIT" &&
-            dist.length === 2 &&
-            solutionDist.length === 2,
+            d.mode !== "HIT" || // 1
+            (d.mode === "HIT" && dist.length === 1) || // 2
+            (d.mode === "HIT" &&
+              dist.length === 2 &&
+              solutionDist.length === 2) || // 3
+            (d.mode === "HIT" &&
+              dist.length === 2 &&
+              ds.length === 0 &&
+              solutionDist.length !== 2), // 4
           identity,
         ),
         when(
           (d) =>
             d.mode === "HIT" &&
             dist.length === 2 &&
+            ds.length !== 0 &&
             solutionDist.length !== 2,
           (d) => ({index: d.index, mode: "MISS" as KeyMode}),
         ),
+        (d) => [...ds, d],
       ),
     ),
   )
