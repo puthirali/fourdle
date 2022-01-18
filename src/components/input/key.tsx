@@ -8,6 +8,7 @@ import {
   ScreenHeight,
   ScreenInferenceContext,
 } from "../../context/system/screen"
+import {ColorModeContext} from "../../context/theme"
 import type {CharKey, ControlKey, Key} from "../../models/key"
 import {keyStyle} from "../../models/key"
 
@@ -45,6 +46,7 @@ export const ControlKeyCap: React.FC<ControlKeyCapProps> = ({
   onKeyPress,
 }: ControlKeyCapProps) => {
   const {screenHeight} = React.useContext(ScreenInferenceContext)
+  const {makeAccessible} = React.useContext(ColorModeContext)
   const className = `ctrl-key ${keyCap.ctrl}`
   const fs =
     screenHeight === "TALL"
@@ -59,7 +61,7 @@ export const ControlKeyCap: React.FC<ControlKeyCapProps> = ({
       variant="contained"
       sx={keyStyle({
         keyCap,
-        makeAccessible: false,
+        makeAccessible,
         props: keyProps(screenHeight),
       })}
       onClick={() => onKeyPress(keyCap)}
@@ -78,6 +80,7 @@ export const CharKeyCap: React.FC<CharKeyCapProps> = ({
   onKeyPress,
 }: CharKeyCapProps) => {
   const {screenHeight} = React.useContext(ScreenInferenceContext)
+  const {makeAccessible} = React.useContext(ColorModeContext)
   const className = `char-key ${keyCap.mode}`
   return (
     <Button
@@ -85,12 +88,12 @@ export const CharKeyCap: React.FC<CharKeyCapProps> = ({
       variant="contained"
       sx={keyStyle({
         keyCap,
-        makeAccessible: false,
+        makeAccessible,
         props: keyProps(screenHeight),
       })}
       onClick={() => onKeyPress(keyCap)}
     >
-      {keyCap.char.toUpperCase()}
+      {keyCap.char.trim() === "" ? "&nbsp;" : keyCap.char.toUpperCase()}
     </Button>
   )
 }

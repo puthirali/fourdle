@@ -1,5 +1,5 @@
 import * as React from "react"
-import Box from "@mui/material/Box"
+import Stack from "@mui/material/Stack"
 import {StateContext} from "../../context/state"
 import {ScreenInferenceContext} from "../../context/system/screen"
 import {Board} from "./board"
@@ -12,33 +12,29 @@ const Game: React.FC = () => {
     [gameLayout],
   )
   return (
-    <Box
+    <Stack
       className="game"
+      direction="column"
+      alignContent="center"
+      flexGrow="1"
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignContent: "center",
-        flexGrow: 1,
         maxWidth: "1800px",
         width: "100%",
       }}
     >
-      <Box
+      <Stack
         className="boards"
-        sx={{
-          display: "flex",
-          flexDirection: dir,
-          alignContent: "space-evenly",
-          justifyContent: "space-evenly",
-          flexWrap: "wrap",
-          flexGrow: 1,
-        }}
+        direction={dir}
+        alignContent="space-evenly"
+        justifyContent="space-evenly"
+        flexWrap="wrap"
+        flexGrow="1"
       >
         {state.boards.map((bs, idx) => (
           <Board key={`board-${idx}`} board={bs.board} index={idx} />
         ))}
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   )
 }
 

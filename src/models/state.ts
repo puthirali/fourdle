@@ -130,10 +130,10 @@ export function evalLetterStateForBoard(b: Board): LetterState {
 }
 
 export function evalBoard(b: BoardState): BoardState {
-  return {
+  return pipe(b, (b) => ({
     ...b,
     letterState: evalLetterStateForBoard(b.board),
-  }
+  }))
 }
 
 export function evalState(s: State): State {

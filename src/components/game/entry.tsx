@@ -1,6 +1,6 @@
 import * as React from "react"
 import {colors} from "@mui/material"
-import Box from "@mui/system/Box"
+import Stack from "@mui/material/Stack"
 import {Entry as EntryModel} from "../../models/entry"
 import {emptyChar, keyColor} from "../../models/key"
 import {Slot} from "./slot"
@@ -23,24 +23,29 @@ export const EntrySlot: React.FC<EntrySlotProps> = ({
 }: EntrySlotProps) => {
   const keyCap =
     entry.chars.length <= index ? emptyChar : entry.chars[index]
-  return <Slot keyCap={keyCap} isSolution={isSolution} />
+  return (
+    <Slot
+      keyCap={keyCap}
+      isSolution={isSolution}
+      isCommitted={entry.isCommitted}
+    />
+  )
 }
 
 export const Entry: React.FC<EntryProps> = ({
   entry,
   isSolution,
 }: EntryProps) => (
-  <Box
+  <Stack
     className="entry"
+    direction="row"
+    justifyContent="center"
     sx={{
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "center",
       backgroundColor: isSolution
         ? keyColor("BULLSEYE", false)
         : "transparent",
       borderColor: isSolution ? colors.grey[900] : "transparent",
-      borderWidth: isSolution ? "4px" : "0px",
+      borderWidth: "4px",
       borderStyle: "solid",
     }}
   >
@@ -52,5 +57,5 @@ export const Entry: React.FC<EntryProps> = ({
         isSolution={isSolution}
       />
     ))}
-  </Box>
+  </Stack>
 )

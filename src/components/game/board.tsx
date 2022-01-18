@@ -1,9 +1,16 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
 import {colors} from "@mui/material"
-import Box from "@mui/system/Box"
+import Box from "@mui/material/Box"
+import Collapse from "@mui/material/Collapse"
+import Stack from "@mui/material/Stack"
+import {TransitionGroup} from "react-transition-group"
 import {ScreenInferenceContext} from "../../context/system/screen"
-import {Board as BoardModel, lastEntered} from "../../models/entry"
+import {
+  Board as BoardModel,
+  lastEntered,
+  uniq,
+} from "../../models/entry"
 import {Entry} from "./entry"
 
 export interface BoardProps {
@@ -12,49 +19,36 @@ export interface BoardProps {
 }
 
 export const Board: React.FC<BoardProps> = ({board}: BoardProps) => {
-  const {screenHeight, numberOfRows} = React.useContext(
-    ScreenInferenceContext,
-  )
-  const mg =
-    screenHeight === "TINY"
-      ? "2px"
-      : screenHeight === "SHORT"
-      ? "6px"
-      : screenHeight === "MEDIUM"
-      ? "12px"
-      : "16x"
+  const {numberOfRows} = React.useContext(ScreenInferenceContext)
   return (
-    <Box
+    <Stack
       className="board"
-      sx={{
-        display: "flex",
-        alignContent: "center",
-        flexDirection: "column",
-        margin: mg,
-        flexGrow: 0,
-      }}
+      alignContent="space-evenly"
+      justifyContent="space-evenly"
+      direction="column"
+      flexGrow="0"
     >
-      {pipe(board, lastEntered(numberOfRows)).map(([e, index]) => (
-        <Box
-          key={`board-entry-${index}`}
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-          }}
-        >
-          <Box
-            sx={{
-              color: colors.grey[800],
-              width: "2em",
-              textAlign: "right",
-            }}
-          >{`${index + 1}`}</Box>
-          <Entry
-            entry={e}
-            isSolution={board.isSolved && board.currentIndex === index}
-          />
-        </Box>
-      ))}
-    </Box>
+      <TransitionGroup>
+        {pipe(board, lastEntered(numberOfRows)).map(([e, index]) => (
+          <Collapse key={`board-${uniq(board)}-entry-${index}`}>
+            <Stack direction="row">
+              <Box
+                sx={{
+                  color: colors.grey[800],
+                  width: "2em",
+                  textAlign: "right",
+                }}
+              >{`${index + 1}`}</Box>
+              <Entry
+                entry={e}
+                isSolution={
+                  board.isSolved && board.currentIndex === index
+                }
+              />
+            </Stack>
+          </Collapse>
+        ))}
+      </TransitionGroup>
+    </Stack>
   )
 }

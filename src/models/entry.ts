@@ -21,9 +21,10 @@ import {
 
 export interface Entry {
   readonly chars: readonly CharKey[]
+  readonly isCommitted: boolean
 }
 
-export const emptyEntry = (): Entry => ({chars: []})
+export const emptyEntry = (): Entry => ({chars: [], isCommitted: false})
 
 export function isComplete(entry: Entry) {
   return entry.chars.length === 5
@@ -37,7 +38,7 @@ export function fromSolution(solution: string): Entry {
   return pipe(
     solution.split(""),
     A.map((c) => charKey(c as Char, "BULLSEYE") as CharKey),
-    (cs) => ({chars: cs}),
+    (cs) => ({chars: cs, isCommitted: true}),
   )
 }
 
@@ -47,7 +48,9 @@ export function apply(key: Key) {
       key,
       matchTag({
         Char: (ck): Entry =>
-          isComplete(entry) ? entry : {chars: [...entry.chars, ck]},
+          isComplete(entry)
+            ? entry
+            : {chars: [...entry.chars, ck], isCommitted: false},
         Control: (ck): Entry =>
           ck.ctrl === "BACKSPACE"
             ? (pipe(
@@ -80,21 +83,22 @@ interface _Dist_ extends Dist {
 
 type CharDist = {readonly [c in Char]: readonly Dist[]}
 
-export function toEntry(dist: CharDist): Entry {
-  return pipe(
-    dist,
-    R.filter((d) => d.length > 0),
-    R.reduceWithIndex(
-      [] as readonly _Dist_[],
-      (c, cs, ds): _Dist_[] => [
-        ...cs,
-        ...ds.map((d) => ({char: c as Char, ...d})),
-      ],
-    ),
-    A.sort({compare: (a, b) => (a.index > b.index ? 1 : -1)}),
-    A.map((x) => charKey(x.char, x.mode) as CharKey),
-    (chars) => ({chars}),
-  )
+export function toEntry(isCommitted: boolean) {
+  return (dist: CharDist): Entry =>
+    pipe(
+      dist,
+      R.filter((d) => d.length > 0),
+      R.reduceWithIndex(
+        [] as readonly _Dist_[],
+        (c, cs, ds): _Dist_[] => [
+          ...cs,
+          ...ds.map((d) => ({char: c as Char, ...d})),
+        ],
+      ),
+      A.sort({compare: (a, b) => (a.index > b.index ? 1 : -1)}),
+      A.map((x) => charKey(x.char, x.mode) as CharKey),
+      (chars) => ({chars, isCommitted}),
+    )
 }
 
 const emptyCharDist = allChars.reduce(
@@ -189,7 +193,12 @@ export function normalizeCharDist(solution: string) {
 
 export function normalize(solution: string) {
   return (entry: Entry) =>
-    pipe(entry, getDistribution, normalizeCharDist(solution), toEntry)
+    pipe(
+      entry,
+      getDistribution,
+      normalizeCharDist(solution),
+      toEntry(entry.isCommitted),
+    )
 }
 
 export function checkEntry(solution: string) {
@@ -205,7 +214,7 @@ export function checkEntry(solution: string) {
           when((key) => key.char === c, bullsEye),
         ),
       ),
-      (chars) => ({chars}),
+      (chars) => ({chars, isCommitted: true}),
       normalize(solution),
     )
   }
@@ -272,23 +281,26 @@ export function fixEntries(b: Board): Board {
       )
 }
 
+export function nextEntry(b: Board): Board {
+  return pipe(b, fixEntries, (b) => ({
+    ...b,
+    currentIndex: pipe(
+      b.entries,
+      A.findIndex(not(isComplete)),
+      O.getOrElse(() => b.entries.length - 1),
+    ),
+  }))
+}
+
 export function checkSolution(b: Board): Board {
   return pipe(
     b,
     onCurrent(checkEntry(b.solution)),
-    (b) => ({
+    (b): Board => ({
       ...b,
       isSolved: pipe(b.entries[b.currentIndex], isSolved(b.solution)),
     }),
-    fixEntries,
-    (b) => ({
-      ...b,
-      currentIndex: pipe(
-        b.entries,
-        A.findIndex(not(isComplete)),
-        O.getOrElse(() => b.entries.length - 1),
-      ),
-    }),
+    nextEntry,
   )
 }
 
@@ -301,4 +313,12 @@ export const applyKey = (key: Key) => {
             ? checkSolution(b)
             : b,
         )
+}
+
+const hashCode = (s: string) =>
+  // eslint-disable-next-line no-bitwise
+  s.split("").reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)
+
+export function uniq(b: Board) {
+  return hashCode(b.solution)
 }

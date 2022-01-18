@@ -4,6 +4,10 @@ import {CssBaseline, useMediaQuery} from "@mui/material"
 import {createTheme, ThemeProvider} from "@mui/material/styles"
 
 export const ColorModeContext = React.createContext({
+  makeAccessible: false,
+  toggleAccessibility: () => {
+    // template
+  },
   toggleColorMode: () => {
     // template
   },
@@ -18,13 +22,18 @@ export const ProvideTheme: React.FC<ThemeProps> = ({children}) => {
   const [mode, setMode] = React.useState<PaletteMode>(
     prefersDarkMode ? "light" : "dark",
   )
+  const [makeAccessible, setMakeAccessible] = React.useState(false)
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"))
       },
+      toggleAccessibility: () => {
+        setMakeAccessible((prev) => !prev)
+      },
+      makeAccessible,
     }),
-    [],
+    [makeAccessible],
   )
 
   const theme = React.useMemo(
