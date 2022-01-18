@@ -1,6 +1,7 @@
 import * as React from "react"
 import Brightness4Icon from "@mui/icons-material/Brightness4"
 import Brightness7Icon from "@mui/icons-material/Brightness7"
+import SummaryIcon from "@mui/icons-material/SummarizeOutlined"
 import {IconButton, useTheme} from "@mui/material"
 import AppBar from "@mui/material/AppBar"
 import Box from "@mui/material/Box"
@@ -8,7 +9,11 @@ import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
 import {ColorModeContext} from "../../context/theme"
 
-export default function AppHeader() {
+interface AppHeaderProps {
+  readonly showSummary: () => void
+}
+
+export default function AppHeader({showSummary}: AppHeaderProps) {
   const theme = useTheme()
   const colorMode = React.useContext(ColorModeContext)
   return (
@@ -25,6 +30,15 @@ export default function AppHeader() {
             4dle
           </Typography>
           <Box sx={{flexGrow: 1}} />
+          <Box>
+            <IconButton
+              sx={{ml: 1}}
+              onClick={() => showSummary()}
+              color="inherit"
+            >
+              <SummaryIcon />
+            </IconButton>
+          </Box>
           <Box>
             <IconButton
               sx={{ml: 1}}

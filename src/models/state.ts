@@ -4,7 +4,8 @@ import * as T from "@effect-ts/core/Collections/Immutable/Tuple"
 import {pipe} from "@effect-ts/core/Function"
 import * as O from "@effect-ts/core/Option"
 import {matchTag} from "@effect-ts/core/Utils"
-import {applyKey, board, Board} from "./entry"
+import {Interval, Duration} from "luxon"
+import {applyKey, board, Board, boardResult} from "./entry"
 import {
   charKey,
   allChars,
@@ -86,12 +87,100 @@ export interface State {
 export interface BoardResult {
   readonly isSolved: boolean
   readonly trials: number
+  readonly display: string
 }
+
+const encouragement = [
+  "Tough Luck!",
+  "Try again?",
+  "Once more?",
+  "Tomorrow never dies, but today is still alive!",
+  "Already?",
+  "Horror... Horror...",
+]
+
+const props = [
+  "You did it!",
+  "That was... close!",
+  "Phew!",
+  "You like marathons, don't you?",
+  "Somewhere, someone tried a bit more than you, for sure, maybe?",
+  "I'm telling you, these words are funny!",
+]
+
+const kudos = [
+  "You are the one. Blue pill or Red pill?",
+  "Are you a secret genius?",
+  "Wow!",
+  "Lucky, Lucky!",
+  "Over the top!",
+  "Impossible!",
+]
 
 export interface Result {
   readonly startTime: O.Option<Date>
   readonly finishTime: O.Option<Date>
+  readonly time: string
   readonly boardResults: readonly BoardResult[]
+  readonly maxTrials: number
+  readonly display: string
+  readonly isSolved: boolean
+  readonly message: string
+}
+
+function choose<T>(a: readonly T[]) {
+  const min = 0
+  const max = a.length
+  const choice = Math.floor(Math.random() * (max - min + 1) + min)
+  return a[choice]
+}
+
+export function duration(s: State): Duration {
+  if (!O.isSome(s.startTime)) {
+    return Duration.fromObject({minutes: 0})
+  }
+  const endTime = O.getOrElse_(s.finishTime, () => new Date())
+  return Interval.fromDateTimes(s.startTime.value, endTime).toDuration()
+}
+
+export function result(s: State): Result {
+  const boardResults: readonly BoardResult[] = pipe(
+    s.boards,
+    A.map((b) => b.board),
+    A.map(boardResult),
+  )
+
+  const maxTrials = Math.max(
+    ...pipe(
+      boardResults,
+      A.map((b) => b.trials),
+    ),
+  )
+  const isSolved = pipe(
+    boardResults,
+    A.forAll((b) => b.isSolved),
+  )
+  const message = isSolved
+    ? maxTrials > 12
+      ? choose(props)
+      : choose(kudos)
+    : choose(encouragement)
+
+  return {
+    startTime: s.startTime,
+    finishTime: s.finishTime,
+    time: `${duration(s).toFormat("m")} minutes, ${duration(s).toFormat(
+      "s",
+    )} seconds`,
+    maxTrials,
+    boardResults,
+    display: `4dle: ${pipe(
+      boardResults,
+      A.mapWithIndex((i, b) => `#${i + 1}\n${b.display}\n`),
+    ).join("\n")}`,
+    isSolved,
+    message,
+  }
 }
 
 export function newGame(words: readonly string[]): State {

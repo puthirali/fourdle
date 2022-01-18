@@ -10,6 +10,8 @@ import {ProvideScreenInference} from "./context/system/screen"
 import {ProvideTheme} from "./context/theme"
 
 function App() {
+  const [showSummary, setShowSummary] = React.useState(false)
+  const onCloseSummary = () => setShowSummary(false)
   return (
     <ProvideState>
       <ProvideScreenInference>
@@ -31,8 +33,11 @@ function App() {
                 alignItems: "center",
               }}
             >
-              <AppHeader />
-              <Game />
+              <AppHeader showSummary={() => setShowSummary(true)} />
+              <Game
+                showSummary={showSummary}
+                onCloseSummary={onCloseSummary}
+              />
               <Keyboard />
             </Box>
           </Paper>

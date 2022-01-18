@@ -19,6 +19,15 @@ import {
   charKey,
 } from "./key"
 
+type KeyModeEmoji = "🔳" | "⬛" | "🟩" | "🟨"
+type KeyModeDisplay = {readonly [m in KeyMode]: KeyModeEmoji}
+const keyModeEmoji: KeyModeDisplay = {
+  OPEN: "🔳",
+  HIT: "🟨",
+  MISS: "⬛",
+  BULLSEYE: "🟩",
+}
+
 export interface Entry {
   readonly chars: readonly CharKey[]
   readonly isCommitted: boolean
@@ -66,6 +75,10 @@ export function apply(key: Key) {
 
 export function word(entry: Entry) {
   return entry.chars.map((c) => c.char).join("")
+}
+
+export function display(entry: Entry) {
+  return entry.chars.map((c) => keyModeEmoji[c.mode]).join("")
 }
 
 export function isSolved(solution: string) {
@@ -132,13 +145,13 @@ export function normalizeDist(
 ): readonly Dist[] {
   return pipe(
     dist,
-    A.reduce([] as readonly Dist[], (ds, d) =>
+    A.reduceWithIndex([] as readonly Dist[], (i, ds, d) =>
       pipe(
         d,
         // 1. If its not a hit, take it
         // 2. If it is a hit, if its not a dupe, take it
         // 3. If the solution dist has a dupe, take it
-        // 4. If it is the first one, take it
+        // 4. If this is the last one, take it
         // 5. Take it as a miss
         when(
           (d) =>
@@ -149,9 +162,19 @@ export function normalizeDist(
               solutionDist.length === 2) || // 3
             (d.mode === "HIT" &&
               dist.length === 2 &&
+              i > 0 &&
               ds.length === 0 &&
               solutionDist.length !== 2), // 4
           identity,
+        ),
+        when(
+          (d) =>
+            d.mode === "HIT" &&
+            dist.length === 2 &&
+            i === 0 &&
+            ds.length === 0 &&
+            solutionDist.length !== 2,
+          (d) => ({index: d.index, mode: "MISS" as KeyMode}),
         ),
         when(
           (d) =>
@@ -313,6 +336,18 @@ export const applyKey = (key: Key) => {
             ? checkSolution(b)
             : b,
         )
+}
+
+export function displayBoard(b: Board) {
+  return pipe(b.entries, A.map(display), A.join("\n"))
+}
+
+export function boardResult(b: Board) {
+  return {
+    isSolved: b.isSolved,
+    trials: b.entries.length,
+    display: displayBoard(b),
+  }
 }
 
 const hashCode = (s: string) =>

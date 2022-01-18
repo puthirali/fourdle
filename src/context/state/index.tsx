@@ -16,7 +16,9 @@ export const StateContext = React.createContext<IStateContext>({
 })
 
 // const getWords = (): string[] => ["words", "share", "hunch", "color"]
-const getWords = (): string[] => ["worse", "great", "goofy", "yacht"]
+// const getWords = (): string[] => ["worse", "great", "goofy", "yacht"]
+// const getWords = (): string[] => ["lucky", "giver", "delta", "crude"]
+const getWords = (): string[] => ["clock", "flame", "proof", "hedge"]
 
 export interface StateProps {
   readonly children: React.ReactNode
