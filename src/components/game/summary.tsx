@@ -37,7 +37,7 @@ export const GameSummary: React.FC<SummaryProps> = ({
   onClose,
 }: SummaryProps) => {
   const [open, setOpen] = React.useState(isOpen)
-  const [share, setShare] = React.useState("")
+  const [share, setShare] = React.useState(result.display)
   const [copied, setCopied] = React.useState(false)
   React.useEffect(() => setOpen(isOpen), [isOpen])
   const handleClose = () => {

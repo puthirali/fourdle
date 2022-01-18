@@ -176,7 +176,7 @@ export function result(s: State): Result {
     boardResults,
     display: `4dle: ${pipe(
       boardResults,
-      A.mapWithIndex((i, b) => `#${i + 1}\n${b.display}\n`),
+      A.mapWithIndex((i, b) => `#${i + 1}\n${b.display}`),
     ).join("\n")}`,
     isSolved,
     message,

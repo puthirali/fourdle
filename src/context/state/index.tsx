@@ -15,10 +15,12 @@ export const StateContext = React.createContext<IStateContext>({
   },
 })
 
-// const getWords = (): string[] => ["words", "share", "hunch", "color"]
-// const getWords = (): string[] => ["worse", "great", "goofy", "yacht"]
-// const getWords = (): string[] => ["lucky", "giver", "delta", "crude"]
-const getWords = (): string[] => ["clock", "flame", "proof", "hedge"]
+// - const getWords = (): string[] => ["words", "share", "hunch", "color"]
+// + const getWords = (): string[] => ["worse", "great", "goofy", "yacht"]
+// + const getWords = (): string[] => ["lucky", "giver", "delta", "crude"]
+// - const getWords = (): string[] => ["clock", "flame", "proof", "hedge"]
+// + const getWords = (): string[] => ["truce", "heist", "quirk", "angry"]
+const getWords = (): string[] => ["sweat", "youth", "drown"]
 
 export interface StateProps {
   readonly children: React.ReactNode
