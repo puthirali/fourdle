@@ -84,6 +84,11 @@ export interface State {
   readonly finishTime: O.Option<Date>
 }
 
+export type BoardNumber = "one" | "two" | "three" | "four"
+
+export type DayState = {readonly [d in BoardNumber]: State}
+export type DayWords = {readonly [d in BoardNumber]: readonly string[]}
+
 export interface BoardResult {
   readonly isSolved: boolean
   readonly trials: number
@@ -258,4 +263,11 @@ export function handleKeyPress(key: Key) {
     pipe(s, onBoards(pipe(key, forChar(open), applyKey)), (s) =>
       key._tag === "Control" && key.ctrl === "ENTER" ? evalState(s) : s,
     )
+}
+
+export function fromWords(dayWords: DayWords): DayState {
+  return pipe(
+    dayWords,
+    R.map((words) => newGame(words)),
+  ) as DayState
 }

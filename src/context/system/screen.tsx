@@ -1,6 +1,7 @@
 import * as React from "react"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import json2mq from "json2mq"
+import {ModeContext} from "../state/mode"
 
 export type ScreenHeight = "TINY" | "SHORT" | "MEDIUM" | "TALL"
 export type GameLayout = "ROW" | "COL"
@@ -31,6 +32,7 @@ export interface ScreenProps {
 export const ProvideScreenInference: React.FC<ScreenProps> = ({
   children,
 }) => {
+  const {mode} = React.useContext(ModeContext)
   const [inZoomMode, setInZoomMode] = React.useState<boolean>(false)
   const toggleZoomMode = React.useMemo(
     () => () => setInZoomMode(!inZoomMode),
@@ -43,8 +45,9 @@ export const ProvideScreenInference: React.FC<ScreenProps> = ({
   const isSmallW = useMediaQuery(json2mq({maxWidth: 600}))
   const isMediumW = useMediaQuery(json2mq({maxHeight: 800}))
   const isWideW = !isTinyW && !isSmallW && !isMediumW
-  const value = React.useMemo(
-    (): ScreenInference => ({
+  const value = React.useMemo((): ScreenInference => {
+    const tinyScreenRows = mode === "one" ? 6 : mode === "two" ? 3 : 2
+    return {
       screenHeight: isTinyH
         ? "TINY"
         : isShortH
@@ -53,22 +56,26 @@ export const ProvideScreenInference: React.FC<ScreenProps> = ({
         ? "MEDIUM"
         : "TALL",
       numberOfRows:
-        isTinyW || isSmallW ? 2 : isTinyH && !isWideW ? 2 : 6,
+        isTinyW || isSmallW
+          ? tinyScreenRows
+          : isTinyH && !isWideW
+          ? tinyScreenRows
+          : 6,
       gameLayout: isTinyW || isSmallW || inZoomMode ? "COL" : "ROW",
       inZoomMode,
       toggleZoomMode,
-    }),
-    [
-      isTinyH,
-      isShortH,
-      isMediumH,
-      isTinyW,
-      isSmallW,
-      isWideW,
-      inZoomMode,
-      toggleZoomMode,
-    ],
-  )
+    }
+  }, [
+    mode,
+    isTinyH,
+    isShortH,
+    isMediumH,
+    isTinyW,
+    isSmallW,
+    isWideW,
+    inZoomMode,
+    toggleZoomMode,
+  ])
 
   return (
     <ScreenInferenceContext.Provider value={value}>
