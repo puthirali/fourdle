@@ -123,11 +123,14 @@ const kudos = [
 ]
 
 export interface Result {
+  readonly mode: BoardNumber
   readonly startTime: O.Option<Date>
   readonly finishTime: O.Option<Date>
   readonly time: string
   readonly boardResults: readonly BoardResult[]
   readonly maxTrials: number
+  readonly minTrials: number
+  readonly trialCount: number
   readonly display: string
   readonly isSolved: boolean
   readonly message: string
@@ -148,18 +151,22 @@ export function duration(s: State): Duration {
   return Interval.fromDateTimes(s.startTime.value, endTime).toDuration()
 }
 
-export function result(s: State): Result {
+export function result(s: State, mode: BoardNumber): Result {
   const boardResults: readonly BoardResult[] = pipe(
     s.boards,
     A.map((b) => b.board),
     A.map(boardResult),
   )
+  const trials = pipe(
+    boardResults,
+    A.map((b) => b.trials),
+  )
 
-  const maxTrials = Math.max(
-    ...pipe(
-      boardResults,
-      A.map((b) => b.trials),
-    ),
+  const maxTrials = Math.max(...trials)
+  const minTrials = Math.min(...trials)
+  const trialCount = pipe(
+    trials,
+    A.reduce(0, (c, t) => c + t),
   )
   const isSolved = pipe(
     boardResults,
@@ -172,14 +179,19 @@ export function result(s: State): Result {
     : choose(encouragement)
 
   return {
+    mode,
     startTime: s.startTime,
     finishTime: s.finishTime,
-    time: `${duration(s).toFormat("m")} minutes, ${duration(s).toFormat(
-      "s",
-    )} seconds`,
+    time: duration(s).shiftTo("minutes", "seconds").toHuman({
+      listStyle: "long",
+      maximumFractionDigits: 0,
+      unitDisplay: "long",
+    }),
     maxTrials,
+    minTrials,
+    trialCount,
     boardResults,
-    display: `4dle: ${pipe(
+    display: `4dle[${mode}]: ${pipe(
       boardResults,
       A.mapWithIndex((i, b) => `#${i + 1}\n${b.display}`),
     ).join("\n")}`,

@@ -1,12 +1,20 @@
 import * as React from "react"
+import ClockIcon from "@mui/icons-material/HourglassBottom"
+import AttemptIcon from "@mui/icons-material/TryRounded"
 import {
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Button,
-  Stack,
   Typography,
+  List,
+  ListItem,
+  ListItemAvatar,
+  Avatar,
+  ListItemText,
+  Divider,
+  DialogContentText,
 } from "@mui/material"
 import {TransitionProps} from "@mui/material/transitions"
 import Zoom from "@mui/material/Zoom"
@@ -67,14 +75,34 @@ export const GameSummary: React.FC<SummaryProps> = ({
     >
       <DialogTitle>{result.message}</DialogTitle>
       <DialogContent>
-        <Stack
-          sx={{textAlign: "center", lineHeight: "2rem"}}
-          direction="column"
-          spacing="4"
+        <DialogContentText>{`Board# ${result.mode}`}</DialogContentText>
+        <List
+          sx={{
+            width: "100%",
+            bgcolor: "background.paper",
+          }}
         >
-          <Typography variant="body1">{`Time: ${result.time}`}</Typography>
-          <Typography variant="body1">{`Maximum Guess: ${result.maxTrials}`}</Typography>
-        </Stack>
+          <ListItem>
+            <ListItemAvatar>
+              <Avatar>
+                <AttemptIcon />
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary="Guesses"
+              secondary={`Total: ${result.trialCount} Max: ${result.maxTrials} Min: ${result.minTrials}`}
+            />
+          </ListItem>
+          <Divider variant="inset" component="li" />
+          <ListItem>
+            <ListItemAvatar>
+              <Avatar>
+                <ClockIcon />
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText primary="Time" secondary={result.time} />
+          </ListItem>
+        </List>
         <DialogActions>
           {copied && <Typography variant="body2">Copied!</Typography>}
           <CopyToClipboard text={share} onCopy={handleCopy}>

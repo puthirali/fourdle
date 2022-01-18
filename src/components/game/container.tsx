@@ -19,7 +19,7 @@ const Game: React.FC<GameProps> = ({
   const [userClosedSummary, setUserClosedSummary] =
     React.useState(false)
   const {gameLayout} = React.useContext(ScreenInferenceContext)
-  const {state} = React.useContext(StateContext)
+  const {state, mode} = React.useContext(StateContext)
   const dir = React.useMemo(
     () => (gameLayout === "COL" ? "column" : "row"),
     [gameLayout],
@@ -62,7 +62,7 @@ const Game: React.FC<GameProps> = ({
       </Stack>
       <GameSummary
         onClose={onSummaryClosed}
-        result={result(state)}
+        result={result(state, mode)}
         isOpen={state.isDone && !userClosedSummary}
       />
     </>
