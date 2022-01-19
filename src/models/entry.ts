@@ -17,6 +17,7 @@ import {
   hit,
   miss,
   charKey,
+  areKeysEqual,
 } from "./key"
 
 type KeyModeEmoji = "🔳" | "⬛" | "🟩" | "🟨"
@@ -31,6 +32,17 @@ const keyModeEmoji: KeyModeDisplay = {
 export interface Entry {
   readonly chars: readonly CharKey[]
   readonly isCommitted: boolean
+}
+
+export function areEntriesEqual(e1: Entry, e2: Entry) {
+  return (
+    e1.isCommitted === e2.isCommitted &&
+    pipe(
+      e1.chars,
+      A.zipWith(e2.chars, (a, b) => areKeysEqual(a, b)),
+      A.forAll(identity),
+    )
+  )
 }
 
 export const emptyEntry = (): Entry => ({chars: [], isCommitted: false})
@@ -71,6 +83,15 @@ export function apply(key: Key) {
             : entry,
       }),
     )
+}
+
+export function fromWord(word: string): Entry {
+  return pipe(
+    word.split(""),
+    A.reduce(emptyEntry(), (e, c) =>
+      pipe(e, apply(charKey(c as Char, "OPEN"))),
+    ),
+  )
 }
 
 export function word(entry: Entry) {
@@ -114,6 +135,16 @@ export function toEntry(isCommitted: boolean) {
     )
 }
 
+export function areDistributionsEqual(
+  d1: CharDist,
+  d2: CharDist,
+): boolean {
+  return areEntriesEqual(
+    pipe(d1, toEntry(true)),
+    pipe(d2, toEntry(true)),
+  )
+}
+
 const emptyCharDist = allChars.reduce(
   (acc, c) => ({...acc, [c]: []}),
   {},
@@ -139,55 +170,34 @@ export function getDistribution(entry: Entry): CharDist {
   )
 }
 
+type EDist = readonly [readonly Dist[], readonly Dist[]]
+
 export function normalizeDist(
   dist: readonly Dist[],
   solutionDist: readonly Dist[],
 ): readonly Dist[] {
-  return pipe(
-    dist,
-    A.reduceWithIndex([] as readonly Dist[], (i, ds, d) =>
-      pipe(
-        d,
-        // 1. If its not a hit, take it
-        // 2. If it is a hit, if its not a dupe, take it
-        // 3. If the solution dist has a dupe, take it
-        // 4. If this is the last one, take it
-        // 5. Take it as a miss
-        when(
-          (d) =>
-            d.mode !== "HIT" || // 1
-            (d.mode === "HIT" && dist.length === 1) || // 2
-            (d.mode === "HIT" &&
-              dist.length === 2 &&
-              solutionDist.length === 2) || // 3
-            (d.mode === "HIT" &&
-              dist.length === 2 &&
-              i > 0 &&
-              ds.length === 0 &&
-              solutionDist.length !== 2), // 4
-          identity,
+  return dist.length === 1
+    ? dist
+    : pipe(
+        dist,
+        A.reduce([[], []] as EDist, ([left, right], d) =>
+          d.mode !== "HIT"
+            ? ([[...left, d], right] as EDist)
+            : ([left, [...right, d]] as EDist),
         ),
-        when(
-          (d) =>
-            d.mode === "HIT" &&
-            dist.length === 2 &&
-            i === 0 &&
-            ds.length === 0 &&
-            solutionDist.length !== 2,
-          (d) => ({index: d.index, mode: "MISS" as KeyMode}),
-        ),
-        when(
-          (d) =>
-            d.mode === "HIT" &&
-            dist.length === 2 &&
-            ds.length !== 0 &&
-            solutionDist.length !== 2,
-          (d) => ({index: d.index, mode: "MISS" as KeyMode}),
-        ),
-        (d) => [...ds, d],
-      ),
-    ),
-  )
+        ([l, r]: EDist) =>
+          pipe(
+            r,
+            A.reduce(l, (left, d) =>
+              solutionDist.length - left.length > 0
+                ? [...left, d]
+                : ([
+                    ...left,
+                    {index: d.index, mode: "MISS" as KeyMode},
+                  ] as Dist[]),
+            ),
+          ),
+      )
 }
 
 export function hasChar(needle: Char, modes: readonly KeyMode[]) {

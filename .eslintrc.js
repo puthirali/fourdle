@@ -37,8 +37,10 @@ module.exports = {
     "plugin:import/warnings",
     "plugin:import/typescript",
     "plugin:jsx-a11y/recommended",
+    "plugin:jest/recommended",
   ],
   plugins: [
+    "jest",
     "react",
     "react-hooks",
     "@typescript-eslint",

@@ -76,6 +76,17 @@ export function controlKey(ctrl: Control): Key {
   return new ControlKey(ctrl)
 }
 
+export function areKeysEqual(k1: Key, k2: Key): boolean {
+  return pipe(
+    k1,
+    matchTag({
+      Char: (k) =>
+        k2._tag === "Char" && k2.char === k.char && k2.mode === k.mode,
+      Control: (k) => k2._tag === "Control" && k2.ctrl === k.ctrl,
+    }),
+  )
+}
+
 export function charKey(char: Char, mode: KeyMode = "OPEN"): Key {
   return new CharKey(mode, char)
 }
