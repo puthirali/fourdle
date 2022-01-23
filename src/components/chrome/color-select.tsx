@@ -17,6 +17,7 @@ import {
   ConfigContext,
   withAccessibility,
 } from "../../context/settings/config"
+import {useModal} from "../../context/window/modals"
 
 type Accessibility = "NORMAL" | "ACCESSIBLE"
 
@@ -26,12 +27,16 @@ export default function ColorSelect() {
   const {config, setConfig} = React.useContext(ConfigContext)
   const [open, setOpen] = React.useState(false)
   const anchorRef = React.useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setSettingsModal] = useModal("SETTINGS")
   const handleClick = (acc: Accessibility) => {
     pipe(config, withAccessibility(acc === "ACCESSIBLE"), setConfig)
   }
 
   const handleMenuItemClick = (a: Accessibility) => {
     pipe(config, withAccessibility(a === "ACCESSIBLE"), setConfig)
+    setOpen(false)
+    setSettingsModal(false)
   }
 
   const handleToggle = () => {

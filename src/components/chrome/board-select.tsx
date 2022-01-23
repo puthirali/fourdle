@@ -12,6 +12,7 @@ import MenuList from "@mui/material/MenuList"
 import Paper from "@mui/material/Paper"
 import Popper from "@mui/material/Popper"
 import {ConfigContext, withMode} from "../../context/settings/config"
+import {useModal} from "../../context/window/modals"
 import {BoardNumber} from "../../models/state"
 
 export default function BoardSelect() {
@@ -19,6 +20,8 @@ export default function BoardSelect() {
   const [open, setOpen] = React.useState(false)
   const anchorRef = React.useRef<HTMLDivElement>(null)
   const {config, setConfig} = React.useContext(ConfigContext)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setSettingsModal] = useModal("SETTINGS")
 
   const handleClick = (mode: BoardNumber) => {
     pipe(config, withMode(mode), setConfig)
@@ -27,6 +30,7 @@ export default function BoardSelect() {
   const handleMenuItemClick = (md: BoardNumber) => {
     pipe(config, withMode(md), setConfig)
     setOpen(false)
+    setSettingsModal(false)
   }
 
   const handleToggle = () => {

@@ -172,7 +172,7 @@ export function duration(s: State): Duration {
     ? DateTime.fromISO(s.finishTime)
     : DateTime.utc()
 
-  const dur = startTime.diff(endTime)
+  const dur = endTime.diff(startTime)
 
   if (!dur.isValid) return Duration.fromObject({minutes: 0})
   return dur
