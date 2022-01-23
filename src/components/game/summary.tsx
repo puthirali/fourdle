@@ -43,7 +43,7 @@ export const GameSummary: React.FC<SummaryProps> = ({
   result,
 }: SummaryProps) => {
   const [open, setOpen] = useModal("SUMMARY")
-  const [share, setShare] = React.useState(result.display)
+  const [share, setShare] = React.useState(result.shareScore)
   const [copied, setCopied] = React.useState(false)
   React.useEffect(() => {
     setShare(result.display)
@@ -56,10 +56,10 @@ export const GameSummary: React.FC<SummaryProps> = ({
     try {
       navigator.share({
         title: result.shareTitle,
-        text: result.display,
+        text: result.shareScore,
       })
     } catch {
-      setShare(result.display)
+      setShare(result.shareScore)
       setCopied(true)
     }
   }

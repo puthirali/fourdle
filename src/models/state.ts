@@ -10,7 +10,10 @@ import {
   board,
   Board,
   boardResult,
+  display,
   displayBoard,
+  Entry,
+  significantRows,
 } from "./entry"
 import {
   charKey,
@@ -152,7 +155,7 @@ export interface Result {
 
 function choose<T>(a: readonly T[]) {
   const min = 0
-  const max = a.length
+  const max = a.length - 1
   const choice = Math.floor(Math.random() * (max - min + 1) + min)
   return a[choice]
 }
@@ -168,6 +171,7 @@ export function duration(s: State): Duration {
 const emptyEntry = "🖤🖤🖤🖤🖤"
 
 export function gameDisplayV(s: State, numRows: number): string {
+  if (!s.isDone) return ""
   return pipe(
     s.boards,
     A.map((b) => pipe(b.board, displayBoard)),
@@ -180,6 +184,7 @@ export function gameDisplayV(s: State, numRows: number): string {
 }
 
 export function gameDisplayH(s: State, numRows: number): string {
+  if (!s.isDone) return ""
   return pipe(
     s.boards,
     A.map((b) => pipe(b.board, displayBoard)),
@@ -209,6 +214,73 @@ export function gameDisplayH(s: State, numRows: number): string {
     ),
     A.join("\n"),
   )
+}
+
+export interface SignificantEntry {
+  readonly boardNumber: number
+  readonly entry: Entry
+  readonly index: number
+}
+
+type DS = {readonly [a: number]: number}
+
+export function includeIndex(ds: DS, ind: number): DS {
+  const dsu = ind in ds ? ds : {...ds, [ind]: 0}
+  return {...dsu, [ind]: dsu[ind] + 1}
+}
+
+function significantEntry(bn: number, b: Board, idx: number) {
+  const index =
+    idx <= 0 || idx >= b.entries.length - 1 ? b.entries.length - 1 : idx
+  return {
+    boardNumber: bn,
+    entry: b.entries[index],
+    index,
+  }
+}
+
+export function predictSignificantRows(
+  bs: readonly Board[],
+): readonly [string, readonly SignificantEntry[]] {
+  const sig: readonly number[][] = pipe(bs, A.map(significantRows))
+  const messages = ["🎭", "🎯", "🤞", "🏁"]
+  const choice = choose([0, 1, 2, 3])
+  return [
+    messages[choice],
+    pipe(
+      sig,
+      A.map((ss: readonly number[]) => ss[choice]),
+      A.mapWithIndex((i, n) => significantEntry(i, bs[i], n)),
+    ),
+  ]
+}
+
+export function significantDisplay(s: State) {
+  if (!s.isDone) return ""
+  const [message, entries] = pipe(
+    s.boards,
+    A.map((b) => b.board),
+    predictSignificantRows,
+  )
+  const header = `${s.boards.length}dle - (#${s.puzzleNumber}) ${message} -`
+  const stats = `${pipe(
+    s.boards,
+    A.map((b) => b.board.entries.length),
+    A.map((l) => `${l}`),
+    A.join(" | "),
+  )}`
+  const body = pipe(
+    entries,
+    A.map(
+      (e) =>
+        `Word ${e.boardNumber} → ${`${e.index}`.padStart(
+          2,
+          " ",
+        )} → ${display(e.entry)}`,
+    ),
+    A.join("\n"),
+  )
+  return `${header} ${stats}\n${body}`
 }
 
 export function result(s: State, mode: BoardNumber): Result {
@@ -251,8 +323,11 @@ export function result(s: State, mode: BoardNumber): Result {
     minTrials,
     trialCount,
     boardResults,
-    display: ` ${titles[mode]}:\n${gameDisplayH(s, 6)}`,
-    shareScore: `${titles[mode]}:\n ${gameDisplayV(s, 2)}`,
+    display: `${s.boards.length}dle(${s.puzzleNumber}):\n${gameDisplayH(
+      s,
+      6,
+    )}`,
+    shareScore: significantDisplay(s),
     isSolved,
     message,
     shareTitle: titles[mode],

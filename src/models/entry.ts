@@ -387,6 +387,24 @@ export function boardResult(b: Board) {
   }
 }
 
+export function significantRows(b: Board) {
+  const firstYellow = b.entries.findIndex((e) =>
+    e.chars.some((c) => c.mode === "HIT"),
+  )
+  const firstGreen = b.entries.findIndex((e) =>
+    e.chars.some((c) => c.mode === "BULLSEYE"),
+  )
+  const firstTwo = b.entries.findIndex(
+    (e) =>
+      e.chars.filter((c) => c.mode === "HIT" || c.mode === "BULLSEYE")
+        .length >= 2,
+  )
+  const firstTwoGreens = b.entries.findIndex(
+    (e) => e.chars.filter((c) => c.mode === "BULLSEYE").length >= 2,
+  )
+  return [firstYellow, firstGreen, firstTwo, firstTwoGreens]
+}
+
 const hashCode = (s: string) =>
   // eslint-disable-next-line no-bitwise
   s.split("").reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)

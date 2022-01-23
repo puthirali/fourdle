@@ -7,17 +7,19 @@ import AppBar from "@mui/material/AppBar"
 import Box from "@mui/material/Box"
 import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
+import {StateContext} from "../../context/state"
 import {ModalContext} from "../../context/window/modals"
 import ZoomButton from "./zoom-button"
 
 export default function AppHeader() {
   const {setModalIsOpen} = React.useContext(ModalContext)
+  const {state} = React.useContext(StateContext)
   return (
     <Box sx={{width: "100%"}}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" noWrap component="div">
-            &nbsp;4dle
+            &nbsp;4dle - #{state.puzzleNumber}
           </Typography>
           <Box sx={{flexGrow: 1}} />
           <ZoomButton />
