@@ -1,6 +1,5 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core"
-import ClockIcon from "@mui/icons-material/HourglassBottom"
 import AttemptIcon from "@mui/icons-material/TryRounded"
 import {
   Dialog,
@@ -181,15 +180,6 @@ export const GameSummary: React.FC<SummaryProps> = ({
               primary="Guesses"
               secondary={`Total: ${result.trialCount} Max: ${result.maxTrials} Min: ${result.minTrials}`}
             />
-          </ListItem>
-          <Divider variant="inset" component="li" />
-          <ListItem>
-            <ListItemAvatar>
-              <Avatar>
-                <ClockIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Time" secondary={result.time} />
           </ListItem>
         </List>
         <DialogActions>

@@ -3,25 +3,29 @@ import Stack from "@mui/material/Stack"
 import {ConfigContext} from "../../context/settings/config"
 import {StateContext} from "../../context/state"
 import {useModal} from "../../context/window/modals"
-import {result} from "../../models/state"
+import {BoardNumber, result} from "../../models/state"
 import StackBoard from "./stack"
 import {GameSummary} from "./summary"
 import ZoomGame from "./zoom"
+
+type SummaryPop = {readonly [k in BoardNumber]: boolean}
+const emptySummaryPop = {two: false, three: false, four: false}
 
 const Game: React.FC = () => {
   const {
     config: {inZoomMode, mode},
   } = React.useContext(ConfigContext)
   const {state} = React.useContext(StateContext)
-  const [summaryPopped, setSummaryPopped] = React.useState(false)
+  const [summaryPopped, setSummaryPopped] =
+    React.useState<SummaryPop>(emptySummaryPop)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setSummaryOpen] = useModal("SUMMARY")
   React.useEffect(() => {
-    if (state.isDone && !summaryPopped) {
-      setSummaryPopped(true)
+    if (state.isDone && !summaryPopped[mode]) {
+      setSummaryPopped({...summaryPopped, [mode]: true})
       setSummaryOpen(true)
     }
-  }, [setSummaryOpen, state.isDone, summaryPopped])
+  }, [mode, setSummaryOpen, state.isDone, summaryPopped])
   return (
     <>
       <Stack

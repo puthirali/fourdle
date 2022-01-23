@@ -172,7 +172,7 @@ export function duration(s: State): Duration {
     ? DateTime.fromISO(s.finishTime)
     : DateTime.utc()
 
-  const dur = endTime.diff(startTime)
+  const dur = startTime.diff(endTime)
 
   if (!dur.isValid) return Duration.fromObject({minutes: 0})
   return dur
@@ -241,7 +241,9 @@ export function includeIndex(ds: DS, ind: number): DS {
 
 function significantEntry(bn: number, b: Board, idx: number) {
   const index =
-    idx <= 0 || idx >= b.entries.length - 1 ? b.entries.length - 1 : idx
+    idx < 0 || idx >= b.entries.length - 1
+      ? Math.floor(b.entries.length / 2)
+      : idx
   return {
     boardNumber: bn,
     entry: b.entries[index],
