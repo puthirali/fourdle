@@ -1,4 +1,5 @@
 import * as React from "react"
+import {pipe} from "@effect-ts/core"
 import ClockIcon from "@mui/icons-material/HourglassBottom"
 import AttemptIcon from "@mui/icons-material/TryRounded"
 import {
@@ -16,16 +17,66 @@ import {
   Divider,
   DialogContentText,
   Box,
+  Chip,
+  Stack,
 } from "@mui/material"
 import {TransitionProps} from "@mui/material/transitions"
 import Zoom from "@mui/material/Zoom"
 import {CopyToClipboard} from "react-copy-to-clipboard"
+import useLocalStorageState from "use-local-storage-state"
 import {useModal} from "../../context/window/modals"
 import {Result} from "../../models/state"
 
 export interface SummaryProps {
   readonly result: Result
 }
+
+export interface Streak {
+  readonly totalDays: number
+  readonly currentStreak: number
+  readonly longestStreak: number
+  readonly longestGap: number
+  readonly lastPuzzle: number
+}
+
+function incStreak(result: Result) {
+  return (streak: Streak): Streak => {
+    if (result.puzzleNumber !== streak.lastPuzzle) {
+      const gap =
+        streak.lastPuzzle === 0
+          ? 0
+          : result.puzzleNumber - streak.lastPuzzle
+      const streakContinues =
+        streak.lastPuzzle === result.puzzleNumber - 1
+
+      const currentStreak = streakContinues
+        ? streak.currentStreak + 1
+        : 1
+      const longestStreak = Math.max(
+        streak.longestStreak,
+        currentStreak,
+      )
+      const longestGap = Math.max(streak.longestGap, gap)
+
+      return {
+        totalDays: streak.totalDays + 1,
+        longestStreak,
+        currentStreak,
+        longestGap,
+        lastPuzzle: result.puzzleNumber,
+      }
+    }
+    return streak
+  }
+}
+
+const emptyStreak = () => ({
+  totalDays: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  longestGap: 0,
+  lastPuzzle: 0,
+})
 
 const Transition = React.forwardRef(function Transition(
   // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
@@ -45,9 +96,16 @@ export const GameSummary: React.FC<SummaryProps> = ({
   const [open, setOpen] = useModal("SUMMARY")
   const [share, setShare] = React.useState(result.shareScore)
   const [copied, setCopied] = React.useState(false)
+  const [streak, setStreak] = useLocalStorageState(
+    `streak-${result.mode}`,
+    emptyStreak(),
+  )
   React.useEffect(() => {
-    setShare(result.display)
-  }, [result])
+    setShare(result.shareScore)
+    if (result.isSolved && streak.lastPuzzle !== result.puzzleNumber) {
+      pipe(streak, incStreak(result), setStreak)
+    }
+  }, [result, setStreak, streak])
   const handleClose = () => {
     setOpen(false)
   }
@@ -85,6 +143,29 @@ export const GameSummary: React.FC<SummaryProps> = ({
             bgcolor: "background.paper",
           }}
         >
+          <ListItem>
+            <ListItemAvatar>
+              <Avatar>
+                <AttemptIcon />
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary="Stats"
+              secondary={
+                <Stack component="span" direction="row">
+                  <Chip
+                    component="span"
+                    label={`Total: ${streak.totalDays}`}
+                  />
+                  <Chip
+                    component="span"
+                    label={`Streak: ${streak.longestStreak}`}
+                  />
+                </Stack>
+              }
+            />
+          </ListItem>
+          <Divider variant="inset" component="li" />
           <ListItem>
             <Box sx={{marginLeft: "-1rem"}}>
               <pre>{result.display}</pre>

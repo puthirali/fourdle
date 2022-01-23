@@ -2,9 +2,8 @@ import * as A from "@effect-ts/core/Collections/Immutable/Array"
 import * as R from "@effect-ts/core/Collections/Immutable/Dictionary"
 import * as T from "@effect-ts/core/Collections/Immutable/Tuple"
 import {pipe} from "@effect-ts/core/Function"
-import * as O from "@effect-ts/core/Option"
 import {matchTag} from "@effect-ts/core/Utils"
-import {Interval, Duration} from "luxon"
+import {Duration, DateTime} from "luxon"
 import {
   applyKey,
   board,
@@ -97,12 +96,16 @@ export interface State {
   readonly letterState: LetterState
   readonly boards: readonly BoardState[]
   readonly isDone: boolean
-  readonly startTime: O.Option<Date>
-  readonly finishTime: O.Option<Date>
+  readonly startTime?: string
+  readonly finishTime?: string
 }
 
-export type DayState = {readonly [d in BoardNumber]: State}
+export type BoardStateMap = {readonly [d in BoardNumber]: State}
 export type DayWords = {readonly [d in BoardNumber]: readonly string[]}
+export interface DayState {
+  puzzleNumber: number
+  states: BoardStateMap
+}
 
 export interface BoardResult {
   readonly isSolved: boolean
@@ -138,9 +141,10 @@ const kudos = [
 ]
 
 export interface Result {
+  readonly puzzleNumber: number
   readonly mode: BoardNumber
-  readonly startTime: O.Option<Date>
-  readonly finishTime: O.Option<Date>
+  readonly startTime?: string
+  readonly finishTime?: string
   readonly time: string
   readonly boardResults: readonly BoardResult[]
   readonly maxTrials: number
@@ -161,11 +165,17 @@ function choose<T>(a: readonly T[]) {
 }
 
 export function duration(s: State): Duration {
-  if (!O.isSome(s.startTime)) {
-    return Duration.fromObject({minutes: 0})
-  }
-  const endTime = O.getOrElse_(s.finishTime, () => new Date())
-  return Interval.fromDateTimes(s.startTime.value, endTime).toDuration()
+  const startTime = s.startTime
+    ? DateTime.fromISO(s.startTime)
+    : DateTime.utc()
+  const endTime = s.finishTime
+    ? DateTime.fromISO(s.finishTime)
+    : DateTime.utc()
+
+  const dur = startTime.diff(endTime)
+
+  if (!dur.isValid) return Duration.fromObject({minutes: 0})
+  return dur
 }
 
 const emptyEntry = "🖤🖤🖤🖤🖤"
@@ -311,6 +321,7 @@ export function result(s: State, mode: BoardNumber): Result {
     : choose(encouragement)
 
   return {
+    puzzleNumber: s.puzzleNumber,
     mode,
     startTime: s.startTime,
     finishTime: s.finishTime,
@@ -346,8 +357,7 @@ export function newGame(
       board: board(w),
     })),
     isDone: false,
-    startTime: O.some(new Date()),
-    finishTime: O.none,
+    startTime: DateTime.utc().toISO(),
   }
 }
 
@@ -394,7 +404,10 @@ export function evalState(s: State): State {
       ),
     }),
     evalLetterState,
-    (s) => ({...s, finishTime: s.isDone ? O.some(new Date()) : O.none}),
+    (s) => ({
+      ...s,
+      finishTime: s.isDone ? DateTime.utc().toISO() : undefined,
+    }),
   )
 }
 
@@ -419,8 +432,11 @@ export function fromWords(
   dayNumber: number,
   dayWords: DayWords,
 ): DayState {
-  return pipe(
-    dayWords,
-    R.map((words) => newGame(dayNumber, words)),
-  ) as DayState
+  return {
+    puzzleNumber: dayNumber,
+    states: pipe(
+      dayWords,
+      R.map((words) => newGame(dayNumber, words)),
+    ),
+  } as DayState
 }

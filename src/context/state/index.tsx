@@ -1,6 +1,7 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
 import {DateTime} from "luxon"
+import useLocalStorageState from "use-local-storage-state"
 import allWords from "../../data/fives"
 import w2 from "../../data/w2"
 import w3 from "../../data/w3"
@@ -52,21 +53,31 @@ export const ProvideState: React.FC<StateProps> = ({children}) => {
     // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
     (d) => d.shiftTo("days").days + 1,
   )
-  const [dayState, setDayState] = React.useState<DayState>(
+  const [dayState, setDayState] = useLocalStorageState<DayState>(
+    "day-state",
     fromWords(dayNumber, getWords(dayNumber)),
   )
+
+  React.useEffect(() => {
+    if (dayState.puzzleNumber !== dayNumber) {
+      setDayState(fromWords(dayNumber, getWords(dayNumber)))
+    }
+  }, [dayNumber, dayState.puzzleNumber, setDayState])
   const {
     config: {mode},
   } = React.useContext(ConfigContext)
   const value = React.useMemo(
     () => ({
-      state: dayState[mode],
+      state: dayState.states[mode],
       onKeyPress: (key: Key) =>
-        pipe(dayState[mode], handleKeyPress(key), (state) =>
-          setDayState({...dayState, [mode]: state}),
+        pipe(dayState.states[mode], handleKeyPress(key), (state) =>
+          setDayState({
+            puzzleNumber: dayState.puzzleNumber,
+            states: {...dayState.states, [mode]: state},
+          }),
         ),
     }),
-    [mode, dayState],
+    [dayState.states, dayState.puzzleNumber, mode, setDayState],
   )
   return (
     <StateContext.Provider value={value}>
