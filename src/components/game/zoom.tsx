@@ -70,10 +70,9 @@ export default function ZoomGame() {
           aria-label="zoom boards"
           centered
         >
-          <Tab label="#1" {...a11yProps(0)} />
-          <Tab label="#2" {...a11yProps(0)} />
-          <Tab label="#3" {...a11yProps(1)} />
-          <Tab label="#4" {...a11yProps(2)} />
+          {state.boards.map((_, idx) => (
+            <Tab label={`#${idx + 1}`} {...a11yProps(idx)} />
+          ))}
         </Tabs>
       </Box>
       {state.boards.map((bs, idx) => (

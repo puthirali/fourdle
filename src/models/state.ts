@@ -207,7 +207,10 @@ export function gameDisplayH(s: State, numRows: number): string {
             A.replicate_(numRows - brs.length, ""),
             A.mapWithIndex(
               (i: number) =>
-                `${`${brs.length + i}`.padStart(2, " ")} ${emptyEntry}`,
+                `${`${brs.length + i + 1}`.padStart(
+                  2,
+                  " ",
+                )} ${emptyEntry}`,
             ),
           ),
         ] as readonly string[],
@@ -295,6 +298,37 @@ export function significantDisplay(s: State) {
   return `${header} ${stats}\n${body}`
 }
 
+type IndexedCount = readonly [number, number]
+type IndexedCountList = readonly IndexedCount[]
+
+export function minimumDisplay(s: State) {
+  if (!s.isDone) return ""
+  const sortedIC = pipe(
+    s.boards,
+    A.reduceWithIndex([] as IndexedCountList, (i, trs, bs) => [
+      ...trs,
+      [i, bs.board.entries.length] as IndexedCount,
+    ]),
+    A.sort({compare: (x, y) => (x[1] > y[1] ? 1 : -1)}),
+  )
+  const idx = sortedIC[0][0]
+  const body = pipe(
+    s.boards[idx].board,
+    displayBoard,
+    (s) => s.split("\n"),
+    A.takeRight(6),
+    A.join("\n"),
+  )
+  const header = `${s.boards.length}dle - (#${s.puzzleNumber})`
+  const stats = `${pipe(
+    s.boards,
+    A.map((b) => b.board.entries.length),
+    A.map((l) => `${l}`),
+    A.join(" | "),
+  )}`
+  return `${header} ${stats}\nWord ${idx + 1}\n${body}`
+}
+
 export function result(s: State, mode: BoardNumber): Result {
   const boardResults: readonly BoardResult[] = pipe(
     s.boards,
@@ -340,7 +374,7 @@ export function result(s: State, mode: BoardNumber): Result {
       s,
       6,
     )}`,
-    shareScore: significantDisplay(s),
+    shareScore: minimumDisplay(s),
     isSolved,
     message,
     shareTitle: titles[mode],
