@@ -25,12 +25,12 @@ export const Slot: React.FC<SlotProps> = ({
   } = React.useContext(ConfigContext)
   const sz =
     screenHeight === "TINY"
-      ? "36px"
+      ? "32px"
       : screenHeight === "SHORT"
-      ? "40px"
+      ? "36px"
       : screenHeight === "MEDIUM"
-      ? "56px"
-      : "72px"
+      ? "48px"
+      : "64px"
   const baseStyle = {
     display: "inline-flex",
     justifyContent: "center",

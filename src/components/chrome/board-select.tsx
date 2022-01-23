@@ -67,11 +67,11 @@ export default function BoardSelect() {
         </Button>
       </ButtonGroup>
       <Popper
+        style={{zIndex: 1900}}
         open={open}
         anchorEl={anchorRef.current}
         role={undefined}
         transition
-        disablePortal
       >
         {({TransitionProps, placement}) => (
           <Grow
