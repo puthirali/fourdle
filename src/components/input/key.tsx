@@ -4,11 +4,11 @@ import {matchTag} from "@effect-ts/core/Utils"
 import BackspaceIcon from "@mui/icons-material/BackspaceOutlined"
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn"
 import {Button} from "@mui/material"
+import {ConfigContext} from "../../context/settings/config"
 import {
   ScreenHeight,
   ScreenInferenceContext,
 } from "../../context/system/screen"
-import {ColorModeContext} from "../../context/theme"
 import type {CharKey, ControlKey, Key} from "../../models/key"
 import {keyStyle} from "../../models/key"
 
@@ -46,7 +46,9 @@ export const ControlKeyCap: React.FC<ControlKeyCapProps> = ({
   onKeyPress,
 }: ControlKeyCapProps) => {
   const {screenHeight} = React.useContext(ScreenInferenceContext)
-  const {makeAccessible} = React.useContext(ColorModeContext)
+  const {
+    config: {isAccessible: makeAccessible},
+  } = React.useContext(ConfigContext)
   const className = `ctrl-key ${keyCap.ctrl}`
   const fs =
     screenHeight === "TALL"
@@ -80,7 +82,9 @@ export const CharKeyCap: React.FC<CharKeyCapProps> = ({
   onKeyPress,
 }: CharKeyCapProps) => {
   const {screenHeight} = React.useContext(ScreenInferenceContext)
-  const {makeAccessible} = React.useContext(ColorModeContext)
+  const {
+    config: {isAccessible: makeAccessible},
+  } = React.useContext(ConfigContext)
   const className = `char-key ${keyCap.mode}`
   return (
     <Button

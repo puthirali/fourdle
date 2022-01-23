@@ -6,6 +6,7 @@ import * as NA from "@effect-ts/core/Collections/Immutable/NonEmptyArray"
 import {constant, identity, not} from "@effect-ts/core/Function"
 import * as O from "@effect-ts/core/Option"
 import {matchTag} from "@effect-ts/core/Utils"
+import allWords from "../data/fives"
 import {when} from "../utils"
 import {
   allChars,
@@ -18,20 +19,23 @@ import {
   miss,
   charKey,
   areKeysEqual,
+  error,
 } from "./key"
 
-type KeyModeEmoji = "🔳" | "⬛" | "🟩" | "🟨"
+type KeyModeEmoji = "🔳" | "⬛" | "🟩" | "🟨" | "🟥"
 type KeyModeDisplay = {readonly [m in KeyMode]: KeyModeEmoji}
 const keyModeEmoji: KeyModeDisplay = {
   OPEN: "🔳",
   HIT: "🟨",
   MISS: "⬛",
   BULLSEYE: "🟩",
+  ERROR: "🟥",
 }
 
 export interface Entry {
   readonly chars: readonly CharKey[]
   readonly isCommitted: boolean
+  readonly isInvalid: boolean
 }
 
 export function areEntriesEqual(e1: Entry, e2: Entry) {
@@ -45,10 +49,14 @@ export function areEntriesEqual(e1: Entry, e2: Entry) {
   )
 }
 
-export const emptyEntry = (): Entry => ({chars: [], isCommitted: false})
+export const emptyEntry = (): Entry => ({
+  chars: [],
+  isCommitted: false,
+  isInvalid: false,
+})
 
 export function isComplete(entry: Entry) {
-  return entry.chars.length === 5
+  return entry.chars.length === 5 && !entry.isInvalid
 }
 
 export function isEmpty(entry: Entry) {
@@ -59,19 +67,24 @@ export function fromSolution(solution: string): Entry {
   return pipe(
     solution.split(""),
     A.map((c) => charKey(c as Char, "BULLSEYE") as CharKey),
-    (cs) => ({chars: cs, isCommitted: true}),
+    (cs) => ({chars: cs, isCommitted: true, isInvalid: false}),
   )
 }
 
 export function apply(key: Key) {
-  return (entry: Entry): Entry =>
-    pipe(
+  return (entr: Entry): Entry => {
+    const entry = entr.isInvalid ? emptyEntry() : entr
+    return pipe(
       key,
       matchTag({
         Char: (ck): Entry =>
           isComplete(entry)
             ? entry
-            : {chars: [...entry.chars, ck], isCommitted: false},
+            : {
+                chars: [...entry.chars, ck],
+                isCommitted: false,
+                isInvalid: false,
+              },
         Control: (ck): Entry =>
           ck.ctrl === "BACKSPACE"
             ? (pipe(
@@ -83,6 +96,7 @@ export function apply(key: Key) {
             : entry,
       }),
     )
+  }
 }
 
 export function fromWord(word: string): Entry {
@@ -131,7 +145,7 @@ export function toEntry(isCommitted: boolean) {
       ),
       A.sort({compare: (a, b) => (a.index > b.index ? 1 : -1)}),
       A.map((x) => charKey(x.char, x.mode) as CharKey),
-      (chars) => ({chars, isCommitted}),
+      (chars) => ({chars, isCommitted, isInvalid: false}),
     )
 }
 
@@ -237,6 +251,14 @@ export function normalize(solution: string) {
 export function checkEntry(solution: string) {
   return (entry: Entry): Entry => {
     if (!isComplete(entry)) return entry
+    const completed = word(entry)
+    if (!allWords.words.includes(completed)) {
+      return {
+        ...entry,
+        chars: entry.chars.map(error),
+        isInvalid: true,
+      }
+    }
     return pipe(
       solution.split(""),
       A.zipWith(entry.chars, (c, k) =>
@@ -247,7 +269,7 @@ export function checkEntry(solution: string) {
           when((key) => key.char === c, bullsEye),
         ),
       ),
-      (chars) => ({chars, isCommitted: true}),
+      (chars) => ({chars, isCommitted: true, isInvalid: false}),
       normalize(solution),
     )
   }
@@ -349,7 +371,12 @@ export const applyKey = (key: Key) => {
 }
 
 export function displayBoard(b: Board) {
-  return pipe(b.entries, A.map(display), A.join("\n"))
+  return pipe(
+    b.entries,
+    A.map(display),
+    A.mapWithIndex((i, s) => `${`${i + 1}`.padStart(2, " ")} ${s}`),
+    A.join("\n"),
+  )
 }
 
 export function boardResult(b: Board) {

@@ -2,6 +2,7 @@ import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
 import {useTheme} from "@mui/material"
 import Box from "@mui/material/Box"
+import {ConfigContext} from "../../context/settings/config"
 import {StateContext} from "../../context/state"
 import type {Key} from "../../models/key"
 import {charP, keyboard} from "../../models/key"
@@ -65,9 +66,17 @@ export const KeyboardBase: React.FC<KeyboardProps> = ({
 }
 
 export const Keyboard: React.FC = () => {
+  const {state} = React.useContext(StateContext)
   const {
-    state: {letterState},
-  } = React.useContext(StateContext)
+    config: {inZoomMode, currentZoom},
+  } = React.useContext(ConfigContext)
+  const letterState = React.useMemo(
+    () =>
+      inZoomMode
+        ? state.boards[currentZoom].letterState
+        : state.letterState,
+    [currentZoom, inZoomMode, state.boards, state.letterState],
+  )
   const row1 = keyboard[0].map((c) => pipe(letterState, getKey(c)))
   const row2 = keyboard[1].map((c) => pipe(letterState, getKey(c)))
   const row3 = keyboard[2].map((c) => pipe(letterState, getKey(c)))

@@ -5,7 +5,13 @@ import {pipe} from "@effect-ts/core/Function"
 import * as O from "@effect-ts/core/Option"
 import {matchTag} from "@effect-ts/core/Utils"
 import {Interval, Duration} from "luxon"
-import {applyKey, board, Board, boardResult} from "./entry"
+import {
+  applyKey,
+  board,
+  Board,
+  boardResult,
+  displayBoard,
+} from "./entry"
 import {
   charKey,
   allChars,
@@ -20,7 +26,14 @@ import {
 } from "./key"
 import type {CharKey} from "./key"
 
+export type BoardNumber = "two" | "three" | "four"
 export type LetterState = {readonly [k in Char]: KeyMode}
+
+const titles: {readonly [k in BoardNumber]: string} = {
+  two: "2dle",
+  three: "3dle",
+  four: "4dle",
+}
 
 const emptyLetterState: LetterState = pipe(
   allChars,
@@ -77,14 +90,13 @@ export interface BoardState {
 }
 
 export interface State {
+  readonly puzzleNumber: number
   readonly letterState: LetterState
   readonly boards: readonly BoardState[]
   readonly isDone: boolean
   readonly startTime: O.Option<Date>
   readonly finishTime: O.Option<Date>
 }
-
-export type BoardNumber = "one" | "two" | "three" | "four"
 
 export type DayState = {readonly [d in BoardNumber]: State}
 export type DayWords = {readonly [d in BoardNumber]: readonly string[]}
@@ -132,8 +144,10 @@ export interface Result {
   readonly minTrials: number
   readonly trialCount: number
   readonly display: string
+  readonly shareScore: string
   readonly isSolved: boolean
   readonly message: string
+  readonly shareTitle: string
 }
 
 function choose<T>(a: readonly T[]) {
@@ -149,6 +163,52 @@ export function duration(s: State): Duration {
   }
   const endTime = O.getOrElse_(s.finishTime, () => new Date())
   return Interval.fromDateTimes(s.startTime.value, endTime).toDuration()
+}
+
+const emptyEntry = "🖤🖤🖤🖤🖤"
+
+export function gameDisplayV(s: State, numRows: number): string {
+  return pipe(
+    s.boards,
+    A.map((b) => pipe(b.board, displayBoard)),
+    A.map((bd) =>
+      pipe(bd.split("\n"), A.takeRight(numRows), A.join("\n")),
+    ),
+    A.mapWithIndex((i, s) => `#${i}\n${s}`),
+    A.join("\n"),
+  )
+}
+
+export function gameDisplayH(s: State, numRows: number): string {
+  return pipe(
+    s.boards,
+    A.map((b) => pipe(b.board, displayBoard)),
+    A.map((bd) => pipe(bd.split("\n"), A.takeRight(numRows))),
+    A.map(
+      (brs) =>
+        [
+          ...brs,
+          ...pipe(
+            A.replicate_(numRows - brs.length, ""),
+            A.mapWithIndex(
+              (i: number) =>
+                `${`${brs.length + i}`.padStart(2, " ")} ${emptyEntry}`,
+            ),
+          ),
+        ] as readonly string[],
+    ),
+    A.reduce(A.replicate_(numRows, ""), (lines, bds) =>
+      pipe(
+        bds,
+        A.reduceWithIndex(lines, (idx, ls, dr) => [
+          ...(idx > 0 ? pipe(ls, A.take(idx)) : []),
+          `${ls[idx]}${dr} `,
+          ...pipe(ls, A.takeRight(numRows - idx - 1)),
+        ]),
+      ),
+    ),
+    A.join("\n"),
+  )
 }
 
 export function result(s: State, mode: BoardNumber): Result {
@@ -191,17 +251,20 @@ export function result(s: State, mode: BoardNumber): Result {
     minTrials,
     trialCount,
     boardResults,
-    display: `4dle[${mode}]: ${pipe(
-      boardResults,
-      A.mapWithIndex((i, b) => `#${i + 1}\n${b.display}`),
-    ).join("\n")}`,
+    display: ` ${titles[mode]}:\n${gameDisplayH(s, 6)}`,
+    shareScore: `${titles[mode]}:\n ${gameDisplayV(s, 2)}`,
     isSolved,
     message,
+    shareTitle: titles[mode],
   }
 }
 
-export function newGame(words: readonly string[]): State {
+export function newGame(
+  puzzleNumber: number,
+  words: readonly string[],
+): State {
   return {
+    puzzleNumber,
     letterState: {...emptyLetterState},
     boards: words.map((w) => ({
       letterState: {...emptyLetterState},
@@ -277,9 +340,12 @@ export function handleKeyPress(key: Key) {
     )
 }
 
-export function fromWords(dayWords: DayWords): DayState {
+export function fromWords(
+  dayNumber: number,
+  dayWords: DayWords,
+): DayState {
   return pipe(
     dayWords,
-    R.map((words) => newGame(words)),
+    R.map((words) => newGame(dayNumber, words)),
   ) as DayState
 }

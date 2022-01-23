@@ -31,7 +31,7 @@ export const Board: React.FC<BoardProps> = ({board}: BoardProps) => {
       <TransitionGroup>
         {pipe(board, lastEntered(numberOfRows)).map(([e, index]) => (
           <Collapse key={`board-${uniq(board)}-entry-${index}`}>
-            <Stack direction="row">
+            <Stack direction="row" justifyContent="center" flexGrow="1">
               <Box
                 sx={{
                   color: colors.grey[800],

@@ -1,40 +1,27 @@
 import * as React from "react"
 import Stack from "@mui/material/Stack"
-// import TransitionGroup from "react-transition-group/TransitionGroup"
+import {ConfigContext} from "../../context/settings/config"
 import {StateContext} from "../../context/state"
-import {ScreenInferenceContext} from "../../context/system/screen"
+import {useModal} from "../../context/window/modals"
 import {result} from "../../models/state"
-import {Board} from "./board"
+import StackBoard from "./stack"
 import {GameSummary} from "./summary"
+import ZoomGame from "./zoom"
 
-interface GameProps {
-  readonly showSummary: boolean
-  readonly onCloseSummary: () => void
-}
-
-const Game: React.FC<GameProps> = ({
-  showSummary,
-  onCloseSummary,
-}: GameProps) => {
-  const [userClosedSummary, setUserClosedSummary] =
-    React.useState(false)
-  const {gameLayout} = React.useContext(ScreenInferenceContext)
-  const {state, mode} = React.useContext(StateContext)
-  const dir = React.useMemo(
-    () => (gameLayout === "COL" ? "column" : "row"),
-    [gameLayout],
-  )
-  const onSummaryClosed = React.useMemo(
-    () => () => {
-      setUserClosedSummary(true)
-      onCloseSummary()
-    },
-    [onCloseSummary],
-  )
-  React.useEffect(
-    () => setUserClosedSummary(showSummary ? false : userClosedSummary),
-    [showSummary, userClosedSummary],
-  )
+const Game: React.FC = () => {
+  const {
+    config: {inZoomMode, mode},
+  } = React.useContext(ConfigContext)
+  const {state} = React.useContext(StateContext)
+  const [summaryPopped, setSummaryPopped] = React.useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setSummaryOpen] = useModal("SUMMARY")
+  React.useEffect(() => {
+    if (state.isDone && !summaryPopped) {
+      setSummaryPopped(true)
+      setSummaryOpen(true)
+    }
+  }, [setSummaryOpen, state.isDone, summaryPopped])
   return (
     <>
       <Stack
@@ -47,24 +34,9 @@ const Game: React.FC<GameProps> = ({
           width: "100%",
         }}
       >
-        <Stack
-          className="boards"
-          direction={dir}
-          alignContent="space-evenly"
-          justifyContent="space-evenly"
-          flexWrap="wrap"
-          flexGrow="1"
-        >
-          {state.boards.map((bs, idx) => (
-            <Board key={`board-${idx}`} board={bs.board} index={idx} />
-          ))}
-        </Stack>
+        {inZoomMode ? <ZoomGame /> : <StackBoard />}
       </Stack>
-      <GameSummary
-        onClose={onSummaryClosed}
-        result={result(state, mode)}
-        isOpen={state.isDone && !userClosedSummary}
-      />
+      <GameSummary result={result(state, mode)} />
     </>
   )
 }

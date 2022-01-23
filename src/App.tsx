@@ -4,46 +4,48 @@ import Stack from "@mui/material/Stack"
 import AppHeader from "./components/chrome/header"
 import Game from "./components/game/container"
 import KeyboardEventHandler from "./components/game/keyboard"
+import Help from "./components/info/help"
+import Settings from "./components/info/settings"
 import {Keyboard} from "./components/input/keyboard"
+import {ProvideConfig} from "./context/settings/config"
 import {ProvideState} from "./context/state"
-import {ProvideMode} from "./context/state/mode"
 import {ProvideScreenInference} from "./context/system/screen"
 import {ProvideTheme} from "./context/theme"
+import {ProvideModals} from "./context/window/modals"
 
 function App() {
-  const [showSummary, setShowSummary] = React.useState(false)
-  const onCloseSummary = () => setShowSummary(false)
   return (
-    <ProvideMode>
+    <ProvideConfig>
       <ProvideState>
         <ProvideScreenInference>
           <ProvideTheme>
-            <KeyboardEventHandler />
-            <Paper
-              sx={{
-                height: "100vh",
-                maxHeight: "-webkit-fill-available",
-                display: "flex",
-              }}
-            >
-              <Stack
-                direction="column"
-                className="4dle"
-                flexGrow={1}
-                alignItems="center"
+            <ProvideModals>
+              <KeyboardEventHandler />
+              <Paper
+                sx={{
+                  height: "100vh",
+                  maxHeight: "-webkit-fill-available",
+                  display: "flex",
+                }}
               >
-                <AppHeader showSummary={() => setShowSummary(true)} />
-                <Game
-                  showSummary={showSummary}
-                  onCloseSummary={onCloseSummary}
-                />
-                <Keyboard />
-              </Stack>
-            </Paper>
+                <Stack
+                  direction="column"
+                  className="4dle"
+                  flexGrow={1}
+                  alignItems="center"
+                >
+                  <AppHeader />
+                  <Game />
+                  <Keyboard />
+                </Stack>
+              </Paper>
+              <Settings />
+              <Help />
+            </ProvideModals>
           </ProvideTheme>
         </ProvideScreenInference>
       </ProvideState>
-    </ProvideMode>
+    </ProvideConfig>
   )
 }
 

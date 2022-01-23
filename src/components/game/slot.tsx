@@ -1,8 +1,8 @@
 import * as React from "react"
 import Box from "@mui/material/Box"
 import ReactCardFlip from "react-card-flip"
+import {ConfigContext} from "../../context/settings/config"
 import {ScreenInferenceContext} from "../../context/system/screen"
-import {ColorModeContext} from "../../context/theme"
 import type {CharKey} from "../../models/key"
 import {keyStyle, open} from "../../models/key"
 
@@ -10,23 +10,27 @@ export interface SlotProps {
   readonly keyCap: CharKey
   readonly isSolution: boolean
   readonly isCommitted: boolean
+  readonly isInvalid: boolean
 }
 
 export const Slot: React.FC<SlotProps> = ({
   keyCap,
   isSolution,
   isCommitted,
+  isInvalid,
 }: SlotProps) => {
   const {screenHeight} = React.useContext(ScreenInferenceContext)
-  const {makeAccessible} = React.useContext(ColorModeContext)
+  const {
+    config: {isAccessible},
+  } = React.useContext(ConfigContext)
   const sz =
     screenHeight === "TINY"
-      ? "32px"
-      : screenHeight === "SHORT"
       ? "36px"
+      : screenHeight === "SHORT"
+      ? "40px"
       : screenHeight === "MEDIUM"
-      ? "48px"
-      : "64px"
+      ? "56px"
+      : "72px"
   const baseStyle = {
     display: "inline-flex",
     justifyContent: "center",
@@ -39,15 +43,16 @@ export const Slot: React.FC<SlotProps> = ({
   return (
     <ReactCardFlip
       containerClassName="slot-flip"
-      isFlipped={isCommitted}
-      flipDirection="vertical"
+      isFlipped={isCommitted || isInvalid}
+      flipDirection={isInvalid ? "horizontal" : "vertical"}
       flipSpeedFrontToBack={0.8}
+      flipSpeedBackToFront={0.8}
     >
       <Box
         className="slot-open"
         sx={keyStyle({
           keyCap: open(keyCap),
-          makeAccessible,
+          makeAccessible: isAccessible,
           props: baseStyle,
         })}
       >
@@ -57,7 +62,11 @@ export const Slot: React.FC<SlotProps> = ({
       </Box>
       <Box
         className="slot-closed"
-        sx={keyStyle({keyCap, makeAccessible, props: baseStyle})}
+        sx={keyStyle({
+          keyCap,
+          makeAccessible: isAccessible,
+          props: baseStyle,
+        })}
       >
         {keyCap.char.trim() === ""
           ? "\u00A0"

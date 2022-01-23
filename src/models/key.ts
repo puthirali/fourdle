@@ -6,7 +6,7 @@ import {matchTag} from "@effect-ts/core/Utils"
 import {colors} from "@mui/material"
 
 export type EmptyChar = " "
-export type KeyMode = "MISS" | "HIT" | "BULLSEYE" | "OPEN"
+export type KeyMode = "MISS" | "HIT" | "BULLSEYE" | "OPEN" | "ERROR"
 export type Char =
   | "a"
   | "b"
@@ -44,7 +44,13 @@ export const keyboard: readonly CharP[][] = [
   ["+", "z", "x", "c", "v", "b", "n", "m", "-"],
 ]
 
-const modePrecedence: KeyMode[] = ["OPEN", "MISS", "HIT", "BULLSEYE"]
+const modePrecedence: KeyMode[] = [
+  "ERROR",
+  "OPEN",
+  "MISS",
+  "HIT",
+  "BULLSEYE",
+]
 
 export function maxMode(m1: KeyMode, m2: KeyMode): KeyMode {
   const maxIndex = Math.max(
@@ -143,6 +149,8 @@ export const open = withMode("OPEN")
 
 export const hit = withMode("HIT")
 
+export const error = withMode("ERROR")
+
 export function forChar(f: (c: CharKey) => CharKey) {
   return (key: Key): Key =>
     pipe(
@@ -167,11 +175,11 @@ export function keyColor(mode: KeyMode, makeAccessible: boolean) {
     case "MISS":
       return colors.grey[900]
     case "BULLSEYE":
-      return makeAccessible ? colors.deepOrange[900] : colors.green[900]
+      return makeAccessible ? "#009E73" : colors.green[900]
     case "HIT":
-      return makeAccessible
-        ? colors.deepPurple[900]
-        : colors.yellow[900]
+      return makeAccessible ? "#D55E00" : colors.yellow[900]
+    case "ERROR":
+      return makeAccessible ? "#CC79A7" : colors.red[900]
   }
 }
 

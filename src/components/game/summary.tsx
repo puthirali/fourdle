@@ -15,16 +15,16 @@ import {
   ListItemText,
   Divider,
   DialogContentText,
+  Box,
 } from "@mui/material"
 import {TransitionProps} from "@mui/material/transitions"
 import Zoom from "@mui/material/Zoom"
 import {CopyToClipboard} from "react-copy-to-clipboard"
+import {useModal} from "../../context/window/modals"
 import {Result} from "../../models/state"
 
 export interface SummaryProps {
   readonly result: Result
-  readonly isOpen: boolean
-  readonly onClose: () => void
 }
 
 const Transition = React.forwardRef(function Transition(
@@ -41,24 +41,27 @@ const Transition = React.forwardRef(function Transition(
 
 export const GameSummary: React.FC<SummaryProps> = ({
   result,
-  isOpen,
-  onClose,
 }: SummaryProps) => {
-  const [open, setOpen] = React.useState(isOpen)
+  const [open, setOpen] = useModal("SUMMARY")
   const [share, setShare] = React.useState(result.display)
   const [copied, setCopied] = React.useState(false)
   React.useEffect(() => {
-    setOpen(isOpen)
     setShare(result.display)
-  }, [isOpen, result])
+  }, [result])
   const handleClose = () => {
     setOpen(false)
-    onClose()
   }
 
-  const handleShare = () => {
-    setShare(result.display)
-    setCopied(true)
+  const handleShare = async () => {
+    try {
+      navigator.share({
+        title: result.shareTitle,
+        text: result.display,
+      })
+    } catch {
+      setShare(result.display)
+      setCopied(true)
+    }
   }
 
   const handleCopy = () => {
@@ -75,13 +78,18 @@ export const GameSummary: React.FC<SummaryProps> = ({
     >
       <DialogTitle>{result.message}</DialogTitle>
       <DialogContent>
-        <DialogContentText>{`Board# ${result.mode}`}</DialogContentText>
+        <DialogContentText fontWeight="bold">{`Board #${result.mode}`}</DialogContentText>
         <List
           sx={{
             width: "100%",
             bgcolor: "background.paper",
           }}
         >
+          <ListItem>
+            <Box sx={{marginLeft: "-1rem"}}>
+              <pre>{result.display}</pre>
+            </Box>
+          </ListItem>
           <ListItem>
             <ListItemAvatar>
               <Avatar>
