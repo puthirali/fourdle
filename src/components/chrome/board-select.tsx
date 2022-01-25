@@ -13,10 +13,9 @@ import Paper from "@mui/material/Paper"
 import Popper from "@mui/material/Popper"
 import {ConfigContext, withMode} from "../../context/settings/config"
 import {useModal} from "../../context/window/modals"
-import {BoardNumber} from "../../models/state"
+import {BoardNumber, boardNumbers, titles} from "../../models/state"
 
 export default function BoardSelect() {
-  const modes: BoardNumber[] = ["two", "three", "four"]
   const [open, setOpen] = React.useState(false)
   const anchorRef = React.useRef<HTMLDivElement>(null)
   const {config, setConfig} = React.useContext(ConfigContext)
@@ -88,13 +87,13 @@ export default function BoardSelect() {
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList id="board-select-menu">
-                  {modes.map((md) => (
+                  {boardNumbers.map((md) => (
                     <MenuItem
                       key={md}
                       selected={md === config.mode}
                       onClick={() => handleMenuItemClick(md)}
                     >
-                      {md === "two" ? 2 : md === "three" ? 3 : 4}
+                      {titles[md]}
                     </MenuItem>
                   ))}
                 </MenuList>

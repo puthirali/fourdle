@@ -1,81 +1,34 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core"
-import AttemptIcon from "@mui/icons-material/TryRounded"
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Button,
-  Typography,
-  List,
-  ListItem,
-  ListItemAvatar,
-  Avatar,
-  ListItemText,
-  Divider,
-  DialogContentText,
-  Box,
-  Chip,
-  Stack,
-} from "@mui/material"
+import Button from "@mui/material/Button"
+import Dialog from "@mui/material/Dialog"
+import DialogActions from "@mui/material/DialogActions"
+import DialogContent from "@mui/material/DialogContent"
+import DialogTitle from "@mui/material/DialogTitle"
+import Divider from "@mui/material/Divider"
+import List from "@mui/material/List"
+import ListItem from "@mui/material/ListItem"
+import ListItemText from "@mui/material/ListItemText"
+import Stack from "@mui/material/Stack"
 import {TransitionProps} from "@mui/material/transitions"
+import Typography from "@mui/material/Typography"
 import Zoom from "@mui/material/Zoom"
 import {CopyToClipboard} from "react-copy-to-clipboard"
 import useLocalStorageState from "use-local-storage-state"
+import {ConfigContext, withMode} from "../../context/settings/config"
 import {useModal} from "../../context/window/modals"
-import {Result} from "../../models/state"
+import {BoardNumber, Result, titles} from "../../models/state"
+import {
+  emptyStreak,
+  incStreak,
+  modesRemaining,
+  Streak,
+} from "../../models/streak"
+import {Stats} from "./stats"
 
 export interface SummaryProps {
   readonly result: Result
 }
-
-export interface Streak {
-  readonly totalDays: number
-  readonly currentStreak: number
-  readonly longestStreak: number
-  readonly longestGap: number
-  readonly lastPuzzle: number
-}
-
-function incStreak(result: Result) {
-  return (streak: Streak): Streak => {
-    if (result.puzzleNumber !== streak.lastPuzzle) {
-      const gap =
-        streak.lastPuzzle === 0
-          ? 0
-          : result.puzzleNumber - streak.lastPuzzle
-      const streakContinues =
-        streak.lastPuzzle === result.puzzleNumber - 1
-
-      const currentStreak = streakContinues
-        ? streak.currentStreak + 1
-        : 1
-      const longestStreak = Math.max(
-        streak.longestStreak,
-        currentStreak,
-      )
-      const longestGap = Math.max(streak.longestGap, gap)
-
-      return {
-        totalDays: streak.totalDays + 1,
-        longestStreak,
-        currentStreak,
-        longestGap,
-        lastPuzzle: result.puzzleNumber,
-      }
-    }
-    return streak
-  }
-}
-
-const emptyStreak = () => ({
-  totalDays: 0,
-  currentStreak: 0,
-  longestStreak: 0,
-  longestGap: 0,
-  lastPuzzle: 0,
-})
 
 const Transition = React.forwardRef(function Transition(
   // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
@@ -92,11 +45,13 @@ const Transition = React.forwardRef(function Transition(
 export const GameSummary: React.FC<SummaryProps> = ({
   result,
 }: SummaryProps) => {
+  const {config, setConfig} = React.useContext(ConfigContext)
+
   const [open, setOpen] = useModal("SUMMARY")
   const [share, setShare] = React.useState(result.shareScore)
   const [copied, setCopied] = React.useState(false)
-  const [streak, setStreak] = useLocalStorageState(
-    `streak-${result.mode}`,
+  const [streak, setStreak] = useLocalStorageState<Streak>(
+    "streak",
     emptyStreak(),
   )
   React.useEffect(() => {
@@ -126,6 +81,13 @@ export const GameSummary: React.FC<SummaryProps> = ({
     setTimeout(() => setCopied(false), 10000)
   }
 
+  const playsRemaining = modesRemaining(streak, result.puzzleNumber)
+
+  const handlePlay = (md: BoardNumber) => {
+    pipe(config, withMode(md), setConfig)
+    setOpen(false)
+  }
+
   return (
     <Dialog
       TransitionComponent={Transition}
@@ -135,53 +97,31 @@ export const GameSummary: React.FC<SummaryProps> = ({
     >
       <DialogTitle>{result.message}</DialogTitle>
       <DialogContent>
-        <DialogContentText fontWeight="bold">{`Board #${result.mode}`}</DialogContentText>
-        <List
-          sx={{
-            width: "100%",
-            bgcolor: "background.paper",
-          }}
-        >
-          <ListItem>
-            <ListItemAvatar>
-              <Avatar>
-                <AttemptIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary="Stats"
-              secondary={
-                <Stack component="span" direction="row">
-                  <Chip
-                    component="span"
-                    label={`Total: ${streak.totalDays}`}
-                  />
-                  <Chip
-                    component="span"
-                    label={`Streak: ${streak.longestStreak}`}
-                  />
-                </Stack>
-              }
-            />
-          </ListItem>
-          <Divider variant="inset" component="li" />
-          <ListItem>
-            <Box sx={{marginLeft: "-1rem"}}>
-              <pre>{result.display}</pre>
-            </Box>
-          </ListItem>
-          <ListItem>
-            <ListItemAvatar>
-              <Avatar>
-                <AttemptIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary="Guesses"
-              secondary={`Total: ${result.trialCount} Max: ${result.maxTrials} Min: ${result.minTrials}`}
-            />
-          </ListItem>
-        </List>
+        <Stats result={result} streak={streak} />
+        {playsRemaining.length > 0 && (
+          <List>
+            <ListItem>
+              <ListItemText primary="Play" />
+              <Stack
+                direction="row"
+                spacing={2}
+                justifyContent="end"
+                sx={{marginBottom: "1rem"}}
+              >
+                {playsRemaining.map((n) => (
+                  <Button
+                    key={`play-button-${n}`}
+                    variant="contained"
+                    onClick={() => handlePlay(n)}
+                  >
+                    {titles[n]}
+                  </Button>
+                ))}
+              </Stack>
+            </ListItem>
+            <Divider component="li" />
+          </List>
+        )}
         <DialogActions>
           {copied && <Typography variant="body2">Copied!</Typography>}
           <CopyToClipboard text={share} onCopy={handleCopy}>

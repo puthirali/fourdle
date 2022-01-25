@@ -71,7 +71,11 @@ export default function ZoomGame() {
           centered
         >
           {state.boards.map((_, idx) => (
-            <Tab label={`#${idx + 1}`} {...a11yProps(idx)} />
+            <Tab
+              key={`zoom-tab-${idx}`}
+              label={`#${idx + 1}`}
+              {...a11yProps(idx)}
+            />
           ))}
         </Tabs>
       </Box>

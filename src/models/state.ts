@@ -29,9 +29,10 @@ import {
 import type {CharKey} from "./key"
 
 export type BoardNumber = "two" | "three" | "four"
+export const boardNumbers: BoardNumber[] = ["two", "three", "four"]
 export type LetterState = {readonly [k in Char]: KeyMode}
 
-const titles: {readonly [k in BoardNumber]: string} = {
+export const titles: {readonly [k in BoardNumber]: string} = {
   two: "2dle",
   three: "3dle",
   four: "4dle",
@@ -114,12 +115,12 @@ export interface BoardResult {
 }
 
 const encouragement = [
-  "Tough Luck!",
-  "Try again?",
-  "Once more?",
+  "You can do it",
+  "Continue?",
+  "There is still time",
   "Tomorrow never dies, but today is still alive!",
-  "Already?",
-  "Horror... Horror...",
+  "Finish?",
+  "Get it done?",
 ]
 
 const props = [
@@ -147,6 +148,7 @@ export interface Result {
   readonly finishTime?: string
   readonly time: string
   readonly boardResults: readonly BoardResult[]
+  readonly trials: readonly number[]
   readonly maxTrials: number
   readonly minTrials: number
   readonly trialCount: number
@@ -368,6 +370,7 @@ export function result(s: State, mode: BoardNumber): Result {
     }),
     maxTrials,
     minTrials,
+    trials,
     trialCount,
     boardResults,
     display: `${s.boards.length}dle(${s.puzzleNumber}):\n${gameDisplayH(
