@@ -1,6 +1,6 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
-// import {DateTime} from "luxon"
+import {DateTime} from "luxon"
 import useLocalStorageState from "use-local-storage-state"
 import allWords from "../../data/fives"
 import w2 from "../../data/w2"
@@ -46,14 +46,13 @@ export interface StateProps {
 }
 
 export const ProvideState: React.FC<StateProps> = ({children}) => {
-  // const dayNumber = pipe(
-  //   DateTime.utc(),
-  //   // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
-  //   (nw) => nw.diff(nw.set({day: 1, month: 1})),
-  //   // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
-  //   (d) => d.shiftTo("days").days + 1,
-  // )
-  const dayNumber = 1
+  const dayNumber = pipe(
+    DateTime.utc(),
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
+    (nw) => nw.diff(nw.set({day: 1, month: 1})),
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
+    (d) => d.shiftTo("days").days + 1,
+  )
   const [dayState, setDayState] = useLocalStorageState<DayState>(
     "day-state",
     fromWords(dayNumber, getWords(dayNumber)),
