@@ -54,7 +54,10 @@ export const GameSummary: React.FC<SummaryProps> = ({
   )
   React.useEffect(() => {
     setShare(result.shareScore)
-    if (result.isSolved && streak.lastPuzzle !== result.puzzleNumber) {
+    if (
+      result.isSolved &&
+      streak.record[result.mode].lastPuzzle !== result.puzzleNumber
+    ) {
       pipe(streak, incStreak(result), setStreak)
     }
   }, [result, setStreak, streak])

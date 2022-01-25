@@ -7,7 +7,10 @@ import {fromKeyCode} from "../../models/key"
 const KeyboardEventHandler: React.FC = () => {
   const {onKeyPress} = React.useContext(StateContext)
   const handleEvent = React.useCallback(
-    (event) => pipe(event.key, fromKeyCode, O.map(onKeyPress)),
+    (event) =>
+      pipe(event.key, fromKeyCode, O.map(onKeyPress), () =>
+        event.stopPropagation(),
+      ),
     [onKeyPress],
   )
 

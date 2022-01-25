@@ -57,15 +57,21 @@ export const ControlKeyCap: React.FC<ControlKeyCapProps> = ({
       ? "1.5rem"
       : "2rem"
   const sx = {padding: "0.1em", fontSize: fs}
+  const sxk = keyStyle({
+    keyCap,
+    makeAccessible,
+    props: keyProps(screenHeight),
+  })
   return (
     <Button
       className={className}
       variant="contained"
-      sx={keyStyle({
-        keyCap,
-        makeAccessible,
-        props: keyProps(screenHeight),
-      })}
+      sx={{
+        ...sxk,
+        "&.MuiButtonBase-root:hover": {
+          bgcolor: sxk.backgroundColor,
+        },
+      }}
       onClick={() => onKeyPress(keyCap)}
     >
       {keyCap.ctrl === "BACKSPACE" ? (
@@ -86,15 +92,23 @@ export const CharKeyCap: React.FC<CharKeyCapProps> = ({
     config: {isAccessible: makeAccessible},
   } = React.useContext(ConfigContext)
   const className = `char-key ${keyCap.mode}`
+  const sxk = keyStyle({
+    keyCap,
+    makeAccessible,
+    props: keyProps(screenHeight),
+  })
   return (
     <Button
+      // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
+      onFocus={(e) => e.target.blur()}
       className={className}
       variant="contained"
-      sx={keyStyle({
-        keyCap,
-        makeAccessible,
-        props: keyProps(screenHeight),
-      })}
+      sx={{
+        ...sxk,
+        "&.MuiButtonBase-root:hover": {
+          bgcolor: sxk.backgroundColor,
+        },
+      }}
       onClick={() => onKeyPress(keyCap)}
     >
       {keyCap.char.trim() === "" ? "&nbsp;" : keyCap.char.toUpperCase()}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 import * as React from "react"
 import HelpIcon from "@mui/icons-material/HelpOutlined"
 import SettingsIcon from "@mui/icons-material/SettingsOutlined"
@@ -17,7 +18,7 @@ export default function AppHeader() {
   return (
     <Box sx={{width: "100%"}}>
       <AppBar position="static">
-        <Toolbar>
+        <Toolbar variant="dense">
           <Typography variant="h6" noWrap component="div">
             &nbsp;4dle - #{state.puzzleNumber}
           </Typography>
@@ -25,6 +26,7 @@ export default function AppHeader() {
           <ZoomButton />
           <Box>
             <IconButton
+              onFocus={(e) => e.target.blur()}
               size="small"
               sx={{ml: 1}}
               onClick={() => setModalIsOpen("HELP", true)}
@@ -35,6 +37,7 @@ export default function AppHeader() {
           </Box>
           <Box>
             <IconButton
+              onFocus={(e) => e.target.blur()}
               size="small"
               sx={{ml: 1}}
               onClick={() => setModalIsOpen("SUMMARY", true)}
@@ -45,6 +48,7 @@ export default function AppHeader() {
           </Box>
           <Box>
             <IconButton
+              onFocus={(e) => e.target.blur()}
               size="small"
               sx={{ml: 1}}
               onClick={() => setModalIsOpen("SETTINGS", true)}
