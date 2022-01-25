@@ -4,10 +4,12 @@ import json2mq from "json2mq"
 import {ConfigContext} from "../settings/config"
 
 export type ScreenHeight = "TINY" | "SHORT" | "MEDIUM" | "TALL"
+export type ScreenWidth = "NARROW" | "SMALL" | "MEDIUM" | "WIDE"
 export type GameLayout = "ROW" | "COL"
 
 export type ScreenInference = {
   readonly screenHeight: ScreenHeight
+  readonly screenWidth: ScreenWidth
   readonly gameLayout: GameLayout
   readonly numberOfRows: number
 }
@@ -15,6 +17,7 @@ export type ScreenInference = {
 export const ScreenInferenceContext =
   React.createContext<ScreenInference>({
     screenHeight: "SHORT",
+    screenWidth: "SMALL",
     numberOfRows: 2,
     gameLayout: "COL",
   })
@@ -39,6 +42,13 @@ export const ProvideScreenInference: React.FC<ScreenProps> = ({
   const value = React.useMemo((): ScreenInference => {
     const tinyScreenRows = mode === "two" ? 3 : 2
     return {
+      screenWidth: isTinyW
+        ? "NARROW"
+        : isSmallW
+        ? "SMALL"
+        : isMediumW
+        ? "MEDIUM"
+        : "WIDE",
       screenHeight: isTinyH
         ? "TINY"
         : isShortH
@@ -57,13 +67,14 @@ export const ProvideScreenInference: React.FC<ScreenProps> = ({
     }
   }, [
     mode,
+    isTinyW,
+    isSmallW,
+    isMediumW,
     isTinyH,
     isShortH,
     isMediumH,
-    isTinyW,
-    isSmallW,
-    isWideW,
     inZoomMode,
+    isWideW,
   ])
 
   return (

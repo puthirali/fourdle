@@ -15,7 +15,11 @@ export function ComplexListItem({
   return (
     <ListItem>
       <Stack direction="column" spacing={1} pb="1rem">
-        <Typography variant="h6" fontSize="1.5rem" fontWeight="bold">
+        <Typography
+          variant="caption"
+          fontSize={{sm: "1rem", md: "1.5rem"}}
+          fontWeight="bold"
+        >
           {label}
         </Typography>
         {children}

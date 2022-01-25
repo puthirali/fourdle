@@ -1,14 +1,20 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
+import TabContext from "@mui/lab/TabContext"
+import TabList from "@mui/lab/TabList"
+import TabPanel from "@mui/lab/TabPanel"
 import Box from "@mui/material/Box"
 import Chip from "@mui/material/Chip"
 import Divider from "@mui/material/Divider"
 import List from "@mui/material/List"
 import Stack from "@mui/material/Stack"
 import Tab from "@mui/material/Tab"
-import Tabs from "@mui/material/Tabs"
-import {Result} from "../../models/state"
+import {
+  ScreenInferenceContext,
+  ScreenWidth,
+} from "../../context/system/screen"
+import {BoardNumber, Result} from "../../models/state"
 import {
   GameStats,
   overallStats,
@@ -27,63 +33,55 @@ export interface StatProps {
 export function Stat({result, stat, isSelected, tag}: StatProps) {
   return (
     <Box
-      role="tabpanel"
       hidden={!isSelected}
       id={`stat-board-${tag}`}
       aria-labelledby={`stat-board-${tag}`}
       sx={{
         display: "flex",
-        width: "100%",
         justifyContent: "center",
         flexGrow: 1,
       }}
     >
       {isSelected && (
-        <List>
+        <List sx={{width: "100%"}}>
           <ComplexListItem label="Plays">
-            <Stack component="span" direction="row" spacing={2}>
+            <Stack component="span" direction="row" spacing={1}>
+              <Chip size="small" label={`Total: ${stat.totalDays}`} />
               <Chip
-                component="span"
-                label={`Total: ${stat.totalDays}`}
-              />
-              <Chip
-                component="span"
+                size="small"
                 label={`Streak: ${stat.longestStreak}`}
               />
-              <Chip
-                component="span"
-                label={`Gap: ${stat.longestGap}`}
-              />
+              <Chip size="small" label={`Gap: ${stat.longestGap}`} />
             </Stack>
           </ComplexListItem>
           <Divider component="li" />
           <ComplexListItem label="Guesses">
-            <Stack component="span" direction="row" spacing={2}>
+            <Stack component="span" direction="row" spacing={1}>
               <Chip
+                size="small"
                 color={
                   result.minTrials === stat.minimum
                     ? "success"
                     : "default"
                 }
-                component="span"
-                label={`Minimum: ${stat.minimum}`}
+                label={`Min: ${stat.minimum}`}
               />
               <Chip
+                size="small"
                 color={
                   result.maxTrials === stat.maximum
                     ? "success"
                     : "default"
                 }
-                component="span"
-                label={`Maximum: ${stat.maximum}`}
+                label={`Max: ${stat.maximum}`}
               />
               <Chip
+                size="small"
                 color={
                   result.trialCount === trialCount(stat)
                     ? "success"
                     : "default"
                 }
-                component="span"
                 label={`Total: ${trialCount(stat)}`}
               />
             </Stack>
@@ -91,12 +89,12 @@ export function Stat({result, stat, isSelected, tag}: StatProps) {
           <Divider component="li" />
           <ComplexListItem label="Best">
             <Chip
+              size="small"
               color={
                 result.trialCount === trialCount(stat)
                   ? "success"
                   : "default"
               }
-              component="span"
               label={stat.trials.join(" | ")}
             />
           </ComplexListItem>
@@ -130,58 +128,74 @@ function stats(t: StatTabs) {
       : s.record[t === "2dle" ? "two" : t === "3dle" ? "three" : "four"]
 }
 
-const fromResult = (result: Result) =>
-  result.mode === "two" ? 1 : result.mode === "three" ? 3 : 4
+const nameFromBoardNumber = (n: BoardNumber): StatTabs =>
+  n === "four" ? "4dle" : n === "three" ? "3dle" : "2dle"
+
+const shortName = (t: StatTabs): string =>
+  t === "all" ? "all" : t === "2dle" ? "2" : t === "3dle" ? "3" : "4"
+
+const fromTag = (t: StatTabs, w: ScreenWidth) => {
+  return w !== "NARROW" && w !== "SMALL"
+    ? t.toUpperCase()
+    : shortName(t)
+}
 
 export function Stats({result, streak}: StreakProps) {
   const [current, setCurrent] = React.useState(
-    result.mode === "two" ? 1 : result.mode === "three" ? 3 : 4,
+    nameFromBoardNumber(result.mode),
   )
 
   React.useEffect(
-    () => setCurrent(fromResult(result)),
+    () => setCurrent(nameFromBoardNumber(result.mode)),
     [result, setCurrent],
   )
   const handleChange = (
     // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
     event: React.SyntheticEvent,
-    newValue: number,
+    newValue: string,
   ) => {
-    setCurrent(newValue)
+    setCurrent(newValue as StatTabs)
   }
+
+  const {screenWidth} = React.useContext(ScreenInferenceContext)
   return (
-    <Box sx={{width: "100%"}}>
+    <TabContext value={current}>
       <Box
         sx={{
-          marginBottom: "2rem",
           borderBottom: 1,
           borderColor: "divider",
         }}
       >
-        <Tabs
-          value={current}
+        <TabList
           onChange={handleChange}
           aria-label="stat tabs"
           centered
         >
           {tabTags.map((t) => (
             <Tab
+              sx={{minWidth: "auto"}}
               key={`stat-tab-${t}`}
-              label={t.toUpperCase()}
+              value={t}
+              label={fromTag(t, screenWidth)}
               {...a11yProps(t)}
             />
           ))}
-        </Tabs>
+        </TabList>
       </Box>
-      {tabTags.map((t, index) => (
-        <Stat
-          result={result}
-          stat={pipe(streak, stats(t))}
+      {tabTags.map((t) => (
+        <TabPanel
           key={`stat-board-${t}`}
-          isSelected={current === index}
-          tag={t}
-        />
+          value={t}
+          sx={{width: "100%", padding: "0"}}
+        >
+          <Stat
+            result={result}
+            stat={pipe(streak, stats(t))}
+            isSelected={current === t}
+            tag={t}
+          />
+        </TabPanel>
       ))}
-    </Box>
+    </TabContext>
   )
 }

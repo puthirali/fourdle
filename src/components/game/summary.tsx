@@ -4,11 +4,8 @@ import Button from "@mui/material/Button"
 import Dialog from "@mui/material/Dialog"
 import DialogActions from "@mui/material/DialogActions"
 import DialogContent from "@mui/material/DialogContent"
-import DialogTitle from "@mui/material/DialogTitle"
 import Divider from "@mui/material/Divider"
 import List from "@mui/material/List"
-import ListItem from "@mui/material/ListItem"
-import ListItemText from "@mui/material/ListItemText"
 import Stack from "@mui/material/Stack"
 import {TransitionProps} from "@mui/material/transitions"
 import Typography from "@mui/material/Typography"
@@ -24,6 +21,7 @@ import {
   modesRemaining,
   Streak,
 } from "../../models/streak"
+import {ComplexListItem} from "./complex-list-item"
 import {Stats} from "./stats"
 
 export interface SummaryProps {
@@ -94,14 +92,16 @@ export const GameSummary: React.FC<SummaryProps> = ({
       keepMounted
       open={open}
       onClose={handleClose}
+      sx={{minWidth: "375px"}}
     >
-      <DialogTitle>{result.message}</DialogTitle>
-      <DialogContent>
+      <DialogContent
+        dividers
+        sx={{padding: {sm: "0", md: "1rem", lg: "1.5rem"}}}
+      >
         <Stats result={result} streak={streak} />
         {playsRemaining.length > 0 && (
           <List>
-            <ListItem>
-              <ListItemText primary="Play" />
+            <ComplexListItem label="Play">
               <Stack
                 direction="row"
                 spacing={2}
@@ -111,6 +111,7 @@ export const GameSummary: React.FC<SummaryProps> = ({
                 {playsRemaining.map((n) => (
                   <Button
                     key={`play-button-${n}`}
+                    size="small"
                     variant="contained"
                     onClick={() => handlePlay(n)}
                   >
@@ -118,7 +119,7 @@ export const GameSummary: React.FC<SummaryProps> = ({
                   </Button>
                 ))}
               </Stack>
-            </ListItem>
+            </ComplexListItem>
             <Divider component="li" />
           </List>
         )}
