@@ -18,11 +18,20 @@ import {
 import {ConfigContext} from "../settings/config"
 
 export interface IStateContext {
+  readonly dayState: DayState
   readonly state: State
   readonly onKeyPress: (key: Key) => void
 }
 
 export const StateContext = React.createContext<IStateContext>({
+  dayState: {
+    puzzleNumber: 1,
+    states: {
+      two: newGame(1, []),
+      three: newGame(1, []),
+      four: newGame(1, []),
+    },
+  },
   state: newGame(1, []),
   onKeyPress: () => {
     // template
@@ -68,6 +77,7 @@ export const ProvideState: React.FC<StateProps> = ({children}) => {
   } = React.useContext(ConfigContext)
   const value = React.useMemo(
     () => ({
+      dayState,
       state: dayState.states[mode],
       onKeyPress: (key: Key) =>
         pipe(dayState.states[mode], handleKeyPress(key), (state) =>
@@ -77,7 +87,7 @@ export const ProvideState: React.FC<StateProps> = ({children}) => {
           }),
         ),
     }),
-    [dayState.states, dayState.puzzleNumber, mode, setDayState],
+    [dayState, mode, setDayState],
   )
   return (
     <StateContext.Provider value={value}>

@@ -14,7 +14,7 @@ import {CopyToClipboard} from "react-copy-to-clipboard"
 import useLocalStorageState from "use-local-storage-state"
 import {ConfigContext, withMode} from "../../context/settings/config"
 import {useModal} from "../../context/window/modals"
-import {BoardNumber, Result, titles} from "../../models/state"
+import {BoardNumber, DayResults, titles} from "../../models/state"
 import {
   emptyStreak,
   incStreak,
@@ -25,7 +25,7 @@ import {ComplexListItem} from "./complex-list-item"
 import {Stats} from "./stats"
 
 export interface SummaryProps {
-  readonly result: Result
+  readonly results: DayResults
 }
 
 const Transition = React.forwardRef(function Transition(
@@ -41,9 +41,13 @@ const Transition = React.forwardRef(function Transition(
 })
 
 export const GameSummary: React.FC<SummaryProps> = ({
-  result,
+  results,
 }: SummaryProps) => {
   const {config, setConfig} = React.useContext(ConfigContext)
+  const result = React.useMemo(
+    () => results[config.mode],
+    [config.mode, results],
+  )
 
   const [open, setOpen] = useModal("SUMMARY")
   const [share, setShare] = React.useState(result.shareScore)
@@ -53,14 +57,15 @@ export const GameSummary: React.FC<SummaryProps> = ({
     emptyStreak(),
   )
   React.useEffect(() => {
-    setShare(result.shareScore)
     if (
       result.isSolved &&
       streak.record[result.mode].lastPuzzle !== result.puzzleNumber
     ) {
       pipe(streak, incStreak(result), setStreak)
+      setShare(result.shareScore)
+      setOpen(true)
     }
-  }, [result, setStreak, streak])
+  }, [result, setOpen, setStreak, streak])
   const handleClose = () => {
     setOpen(false)
   }
@@ -99,9 +104,9 @@ export const GameSummary: React.FC<SummaryProps> = ({
     >
       <DialogContent
         dividers
-        sx={{padding: {sm: "0", md: "1rem", lg: "1.5rem"}}}
+        sx={{padding: {xs: "0", md: "1rem", lg: "1.5rem"}}}
       >
-        <Stats result={result} streak={streak} />
+        <Stats results={results} streak={streak} />
         {playsRemaining.length > 0 && (
           <List>
             <ComplexListItem label="Play">

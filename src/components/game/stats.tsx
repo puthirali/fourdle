@@ -10,11 +10,12 @@ import Divider from "@mui/material/Divider"
 import List from "@mui/material/List"
 import Stack from "@mui/material/Stack"
 import Tab from "@mui/material/Tab"
+import {ConfigContext} from "../../context/settings/config"
 import {
   ScreenInferenceContext,
   ScreenWidth,
 } from "../../context/system/screen"
-import {BoardNumber, Result} from "../../models/state"
+import {BoardNumber, DayResults, Result} from "../../models/state"
 import {
   GameStats,
   overallStats,
@@ -46,12 +47,31 @@ export function Stat({result, stat, isSelected, tag}: StatProps) {
         <List sx={{width: "100%"}}>
           <ComplexListItem label="Plays">
             <Stack component="span" direction="row" spacing={1}>
-              <Chip size="small" label={`Total: ${stat.totalDays}`} />
               <Chip
+                color={result.isSolved ? "success" : "default"}
+                size="small"
+                label={`Total: ${stat.totalDays}`}
+              />
+              <Chip
+                color={
+                  result.isSolved &&
+                  stat.currentStreak === stat.longestStreak
+                    ? "success"
+                    : "default"
+                }
                 size="small"
                 label={`Streak: ${stat.longestStreak}`}
               />
-              <Chip size="small" label={`Gap: ${stat.longestGap}`} />
+              <Chip
+                color={
+                  stat.longestGap ===
+                  result.puzzleNumber - stat.lastPuzzle
+                    ? "success"
+                    : "default"
+                }
+                size="small"
+                label={`Gap: ${stat.longestGap}`}
+              />
             </Stack>
           </ComplexListItem>
           <Divider component="li" />
@@ -87,16 +107,29 @@ export function Stat({result, stat, isSelected, tag}: StatProps) {
             </Stack>
           </ComplexListItem>
           <Divider component="li" />
-          <ComplexListItem label="Best">
-            <Chip
-              size="small"
-              color={
-                result.trialCount === trialCount(stat)
-                  ? "success"
-                  : "default"
-              }
-              label={stat.trials.join(" | ")}
-            />
+          <ComplexListItem label="Trials">
+            <Stack component="span" direction="column" spacing={1}>
+              <Chip
+                size="small"
+                color={
+                  result.trialCount === trialCount(stat)
+                    ? "success"
+                    : "default"
+                }
+                label={`Best: ${stat.trials.join(" | ")}`}
+              />
+              {result.isSolved && (
+                <Chip
+                  size="small"
+                  color={
+                    result.trialCount === trialCount(stat)
+                      ? "success"
+                      : "default"
+                  }
+                  label={`Now: ${result.trials.join(" | ")}`}
+                />
+              )}
+            </Stack>
           </ComplexListItem>
           <Divider component="li" />
         </List>
@@ -106,7 +139,7 @@ export function Stat({result, stat, isSelected, tag}: StatProps) {
 }
 
 export interface StreakProps {
-  readonly result: Result
+  readonly results: DayResults
   readonly streak: Streak
 }
 
@@ -128,6 +161,16 @@ function stats(t: StatTabs) {
       : s.record[t === "2dle" ? "two" : t === "3dle" ? "three" : "four"]
 }
 
+const fromTabTag = (t: StatTabs): BoardNumber | null => {
+  return t === "2dle"
+    ? "two"
+    : t === "3dle"
+    ? "three"
+    : t === "4dle"
+    ? "four"
+    : null
+}
+
 const nameFromBoardNumber = (n: BoardNumber): StatTabs =>
   n === "four" ? "4dle" : n === "three" ? "3dle" : "2dle"
 
@@ -140,14 +183,17 @@ const fromTag = (t: StatTabs, w: ScreenWidth) => {
     : shortName(t)
 }
 
-export function Stats({result, streak}: StreakProps) {
+export function Stats({results, streak}: StreakProps) {
+  const {
+    config: {mode},
+  } = React.useContext(ConfigContext)
   const [current, setCurrent] = React.useState(
-    nameFromBoardNumber(result.mode),
+    nameFromBoardNumber(mode),
   )
 
   React.useEffect(
-    () => setCurrent(nameFromBoardNumber(result.mode)),
-    [result, setCurrent],
+    () => setCurrent(nameFromBoardNumber(mode)),
+    [mode, setCurrent],
   )
   const handleChange = (
     // eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
@@ -156,6 +202,13 @@ export function Stats({result, streak}: StreakProps) {
   ) => {
     setCurrent(newValue as StatTabs)
   }
+
+  const resultFromTabTag = React.useMemo(() => {
+    return (tabTag: StatTabs) =>
+      pipe(tabTag, fromTabTag, (m) =>
+        m === null ? results[mode] : results[m],
+      )
+  }, [mode, results])
 
   const {screenWidth} = React.useContext(ScreenInferenceContext)
   return (
@@ -189,7 +242,7 @@ export function Stats({result, streak}: StreakProps) {
           sx={{width: "100%", padding: "0"}}
         >
           <Stat
-            result={result}
+            result={resultFromTabTag(t)}
             stat={pipe(streak, stats(t))}
             isSelected={current === t}
             tag={t}

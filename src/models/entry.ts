@@ -248,11 +248,14 @@ export function normalize(solution: string) {
     )
 }
 
-export function checkEntry(solution: string) {
+export function checkEntry(
+  solution: string,
+  skipValidityCheck = false,
+) {
   return (entry: Entry): Entry => {
     if (!isComplete(entry)) return entry
     const completed = word(entry)
-    if (!allWords.words.includes(completed)) {
+    if (!skipValidityCheck && !allWords.words.includes(completed)) {
       return {
         ...entry,
         chars: entry.chars.map(error),

@@ -6,7 +6,7 @@ import {
   fromWord,
   getDistribution,
   normalizeCharDist,
-} from "../../src/models/entry"
+} from "../../models/entry"
 
 const solution = "sweat"
 const solutionDist = pipe(fromSolution(solution), getDistribution)
@@ -40,7 +40,7 @@ describe("Entry", () => {
       const normalized = pipe(
         word,
         fromWord,
-        checkEntry(solution),
+        checkEntry(solution, true),
         getDistribution,
       )
       const countE = word

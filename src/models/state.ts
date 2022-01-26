@@ -104,8 +104,8 @@ export interface State {
 export type BoardStateMap = {readonly [d in BoardNumber]: State}
 export type DayWords = {readonly [d in BoardNumber]: readonly string[]}
 export interface DayState {
-  puzzleNumber: number
-  states: BoardStateMap
+  readonly puzzleNumber: number
+  readonly states: BoardStateMap
 }
 
 export interface BoardResult {
@@ -157,6 +157,12 @@ export interface Result {
   readonly isSolved: boolean
   readonly message: string
   readonly shareTitle: string
+}
+
+export interface DayResults {
+  readonly four: Result
+  readonly three: Result
+  readonly two: Result
 }
 
 function choose<T>(a: readonly T[]) {
@@ -381,6 +387,14 @@ export function result(s: State, mode: BoardNumber): Result {
     isSolved,
     message,
     shareTitle: titles[mode],
+  }
+}
+
+export function dayResults(ds: DayState): DayResults {
+  return {
+    four: result(ds.states.four, "four"),
+    three: result(ds.states.three, "three"),
+    two: result(ds.states.two, "two"),
   }
 }
 

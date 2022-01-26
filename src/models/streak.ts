@@ -33,7 +33,7 @@ function updateStats(result: Result) {
     const gap =
       stats.lastPuzzle === 0
         ? 0
-        : result.puzzleNumber - stats.lastPuzzle
+        : result.puzzleNumber - stats.lastPuzzle - 1
     const streakContinues = stats.lastPuzzle === result.puzzleNumber - 1
 
     const currentStreak = streakContinues ? stats.currentStreak + 1 : 1

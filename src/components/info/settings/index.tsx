@@ -97,15 +97,18 @@ export default function Settings() {
           component="a"
           href="https://qntm.org/files/wordle/index.html"
         >
-          <ListItemText>Play Absurdle</ListItemText>
+          <ListItemText>[Adversarial] Play Absurdle</ListItemText>
         </ListItem>
         <Divider />
+        <ListItem button component="a" href="https://nerdlegame.com/">
+          <ListItemText>[Math] Play Nerdle!</ListItemText>
+        </ListItem>
         <ListItem
           button
           component="a"
           href="https://mathszone.co.uk/resources/grid/ooodle/"
         >
-          <ListItemText>Play Oodle!</ListItemText>
+          <ListItemText>[Math] Play Oodle!</ListItemText>
         </ListItem>
       </List>
     </Dialog>
