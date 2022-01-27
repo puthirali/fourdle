@@ -175,9 +175,9 @@ export function keyColor(mode: KeyMode, makeAccessible: boolean) {
     case "MISS":
       return colors.grey[900]
     case "BULLSEYE":
-      return makeAccessible ? "#009E73" : colors.green[900]
+      return makeAccessible ? "#009E73" : "#1C8C38"
     case "HIT":
-      return makeAccessible ? "#D55E00" : colors.yellow[900]
+      return makeAccessible ? "#D55E00" : "#E0AF1B"
     case "ERROR":
       return makeAccessible ? "#CC79A7" : colors.red[900]
   }
