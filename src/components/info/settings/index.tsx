@@ -110,6 +110,11 @@ export default function Settings() {
         >
           <ListItemText>[Math] Play Oodle!</ListItemText>
         </ListItem>
+        <ListItem button component="a" href="https://hellowordl.net">
+          <ListItemText>
+            [Upto 11 letter words] Play Hello Wordl!
+          </ListItemText>
+        </ListItem>
       </List>
     </Dialog>
   )

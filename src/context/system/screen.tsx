@@ -37,7 +37,7 @@ export const ProvideScreenInference: React.FC<ScreenProps> = ({
   const isMediumH = useMediaQuery(json2mq({maxHeight: 1200}))
   const isTinyW = useMediaQuery(json2mq({maxWidth: 400}))
   const isSmallW = useMediaQuery(json2mq({maxWidth: 600}))
-  const isMediumW = useMediaQuery(json2mq({maxHeight: 800}))
+  const isMediumW = useMediaQuery(json2mq({maxWidth: 800}))
   const isWideW = !isTinyW && !isSmallW && !isMediumW
   const value = React.useMemo((): ScreenInference => {
     const tinyScreenRows = mode === "two" ? 3 : 2

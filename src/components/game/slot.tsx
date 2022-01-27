@@ -19,15 +19,20 @@ export const Slot: React.FC<SlotProps> = ({
   isCommitted,
   isInvalid,
 }: SlotProps) => {
-  const {screenHeight} = React.useContext(ScreenInferenceContext)
+  const {screenHeight, screenWidth} = React.useContext(
+    ScreenInferenceContext,
+  )
   const {
     config: {isAccessible},
   } = React.useContext(ConfigContext)
   const sz =
-    screenHeight === "TINY"
+    screenHeight === "TINY" || !["MEDIUM", "WIDE"].includes(screenWidth)
       ? "32px"
-      : screenHeight === "SHORT"
+      : screenHeight === "SHORT" ||
+        !["MEDIUM", "WIDE"].includes(screenWidth)
       ? "36px"
+      : screenWidth !== "WIDE"
+      ? "40px"
       : screenHeight === "MEDIUM"
       ? "48px"
       : "64px"
