@@ -52,6 +52,10 @@ export const GameSummary: React.FC<SummaryProps> = ({
     setOpen(false)
   }
 
+  React.useEffect(() => {
+    setShare(result.shareScore)
+  }, [result.shareScore])
+
   const handleShare = async () => {
     try {
       navigator.share({
