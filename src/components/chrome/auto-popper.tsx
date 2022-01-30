@@ -1,7 +1,10 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
 import * as React from "react"
+import Box from "@mui/material/Box"
 import Popper from "@mui/material/Popper"
 import useEventCallback from "@mui/material/utils/useEventCallback"
+import Zoom from "@mui/material/Zoom"
 
 export interface AutoHidePopperProps {
   readonly onClose: () => void
@@ -57,8 +60,28 @@ export const AutoHidePopper: React.FC<AutoHidePopperProps> = ({
       open={isOpen}
       anchorEl={isOpen ? anchorEl : null}
       placement="top"
+      transition
+      style={{maxWidth: "300px"}}
+      disablePortal={false}
+      modifiers={[
+        {
+          name: "preventOverflow",
+          enabled: true,
+          options: {
+            altAxis: true,
+            altBoundary: true,
+            tether: true,
+            rootBoundary: "viewport",
+            padding: 8,
+          },
+        },
+      ]}
     >
-      {children}
+      {({TransitionProps}) => (
+        <Zoom {...TransitionProps} appear in={isOpen} timeout={600}>
+          <Box maxWidth="300px">{children}</Box>
+        </Zoom>
+      )}
     </Popper>
   )
 }

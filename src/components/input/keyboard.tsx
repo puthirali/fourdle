@@ -18,6 +18,7 @@ export const KeyRow: React.FC<KeyRowProps> = ({keys}: KeyRowProps) => {
   return (
     <Box
       className="key-row"
+      zIndex={3000}
       sx={{
         flexDirection: "row",
         textAlign: "center",
