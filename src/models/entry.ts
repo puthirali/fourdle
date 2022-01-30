@@ -382,14 +382,6 @@ export function displayBoard(b: Board) {
   )
 }
 
-export function boardResult(b: Board) {
-  return {
-    isSolved: b.isSolved,
-    trials: b.entries.length,
-    display: displayBoard(b),
-  }
-}
-
 export function significantRows(b: Board) {
   const firstYellow = b.entries.findIndex((e) =>
     e.chars.some((c) => c.mode === "HIT"),

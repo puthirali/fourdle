@@ -3,7 +3,7 @@ import {pipe} from "@effect-ts/core/Function"
 import {matchTag} from "@effect-ts/core/Utils"
 import BackspaceIcon from "@mui/icons-material/BackspaceOutlined"
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn"
-import {Button} from "@mui/material"
+import Button from "@mui/material/Button"
 import {ConfigContext} from "../../context/settings/config"
 import {
   ScreenHeight,

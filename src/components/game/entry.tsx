@@ -1,5 +1,5 @@
 import * as React from "react"
-import {colors} from "@mui/material"
+import * as colors from "@mui/material/colors"
 import Stack from "@mui/material/Stack"
 import {ConfigContext} from "../../context/settings/config"
 import {Entry as EntryModel} from "../../models/entry"

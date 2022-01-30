@@ -3,7 +3,7 @@ import {pipe} from "@effect-ts/core"
 import * as A from "@effect-ts/core/Collections/Immutable/Array"
 import * as O from "@effect-ts/core/Option"
 import {matchTag} from "@effect-ts/core/Utils"
-import {colors} from "@mui/material"
+import * as colors from "@mui/material/colors"
 
 export type EmptyChar = " "
 export type KeyMode = "MISS" | "HIT" | "BULLSEYE" | "OPEN" | "ERROR"

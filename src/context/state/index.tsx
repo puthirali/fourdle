@@ -1,13 +1,17 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
 import {DateTime} from "luxon"
-import useLocalStorageState from "use-local-storage-state"
+import useLocalStorageState, {
+  createLocalStorageStateHook,
+} from "use-local-storage-state"
 import allWords from "../../data/fives"
 import w2 from "../../data/w2"
 import w3 from "../../data/w3"
 import w4 from "../../data/w4"
 import type {Key} from "../../models/key"
 import {
+  dayResults,
+  DayResults,
   DayState,
   DayWords,
   fromWords,
@@ -15,24 +19,34 @@ import {
   newGame,
   State,
 } from "../../models/state"
+import {emptyStreak, Streak} from "../../models/streak"
 import {ConfigContext} from "../settings/config"
 
 export interface IStateContext {
   readonly dayState: DayState
   readonly state: State
+  readonly results: DayResults
   readonly onKeyPress: (key: Key) => void
 }
 
-export const StateContext = React.createContext<IStateContext>({
-  dayState: {
-    puzzleNumber: 1,
-    states: {
-      two: newGame(1, []),
-      three: newGame(1, []),
-      four: newGame(1, []),
-    },
+export const emptyDayState: DayState = {
+  puzzleNumber: 1,
+  states: {
+    two: newGame(1, []),
+    three: newGame(1, []),
+    four: newGame(1, []),
   },
+}
+
+export const useStreak = createLocalStorageStateHook<Streak>(
+  "streak",
+  emptyStreak(),
+)
+
+export const StateContext = React.createContext<IStateContext>({
+  dayState: {...emptyDayState},
   state: newGame(1, []),
+  results: dayResults({...emptyDayState}),
   onKeyPress: () => {
     // template
   },
@@ -75,10 +89,14 @@ export const ProvideState: React.FC<StateProps> = ({children}) => {
   const {
     config: {mode},
   } = React.useContext(ConfigContext)
+  const results = React.useMemo(() => {
+    return dayResults(dayState)
+  }, [dayState])
   const value = React.useMemo(
     () => ({
       dayState,
       state: dayState.states[mode],
+      results,
       onKeyPress: (key: Key) =>
         pipe(dayState.states[mode], handleKeyPress(key), (state) =>
           setDayState({
@@ -87,7 +105,7 @@ export const ProvideState: React.FC<StateProps> = ({children}) => {
           }),
         ),
     }),
-    [dayState, mode, setDayState],
+    [dayState, mode, results, setDayState],
   )
   return (
     <StateContext.Provider value={value}>

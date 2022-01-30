@@ -1,13 +1,14 @@
 import * as React from "react"
 import CloseIcon from "@mui/icons-material/Close"
-import {ListItemSecondaryAction, ListSubheader} from "@mui/material"
 import AppBar from "@mui/material/AppBar"
 import Dialog from "@mui/material/Dialog"
 import Divider from "@mui/material/Divider"
 import IconButton from "@mui/material/IconButton"
 import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction"
 import ListItemText from "@mui/material/ListItemText"
+import ListSubheader from "@mui/material/ListSubheader"
 import Slide from "@mui/material/Slide"
 import Toolbar from "@mui/material/Toolbar"
 import {TransitionProps} from "@mui/material/transitions"
@@ -113,6 +114,11 @@ export default function Settings() {
         <ListItem button component="a" href="https://hellowordl.net">
           <ListItemText>
             [Upto 11 letter words] Play Hello Wordl!
+          </ListItemText>
+        </ListItem>
+        <ListItem button component="a" href="https://eldrow.io/">
+          <ListItemText>
+            [Puzzle] Play Reverse Wordle (Eldrow)!
           </ListItemText>
         </ListItem>
       </List>

@@ -3,7 +3,7 @@ import * as React from "react"
 import {pipe} from "@effect-ts/core"
 import CloseZoomButton from "@mui/icons-material/CloseFullscreenOutlined"
 import OpenZoomButton from "@mui/icons-material/FullscreenOutlined"
-import {IconButton} from "@mui/material"
+import IconButton from "@mui/material/IconButton"
 import {ConfigContext, withZoom} from "../../context/settings/config"
 
 export default function ZoomButton() {

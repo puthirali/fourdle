@@ -11,16 +11,11 @@ import {TransitionProps} from "@mui/material/transitions"
 import Typography from "@mui/material/Typography"
 import Zoom from "@mui/material/Zoom"
 import {CopyToClipboard} from "react-copy-to-clipboard"
-import useLocalStorageState from "use-local-storage-state"
 import {ConfigContext, withMode} from "../../context/settings/config"
+import {useStreak} from "../../context/state"
 import {useModal} from "../../context/window/modals"
 import {BoardNumber, DayResults, titles} from "../../models/state"
-import {
-  emptyStreak,
-  incStreak,
-  modesRemaining,
-  Streak,
-} from "../../models/streak"
+import {modesRemaining} from "../../models/streak"
 import {ComplexListItem} from "./complex-list-item"
 import {Stats} from "./stats"
 
@@ -52,20 +47,7 @@ export const GameSummary: React.FC<SummaryProps> = ({
   const [open, setOpen] = useModal("SUMMARY")
   const [share, setShare] = React.useState(result.shareScore)
   const [copied, setCopied] = React.useState(false)
-  const [streak, setStreak] = useLocalStorageState<Streak>(
-    "streak",
-    emptyStreak(),
-  )
-  React.useEffect(() => {
-    if (
-      result.isSolved &&
-      streak.record[result.mode].lastPuzzle !== result.puzzleNumber
-    ) {
-      pipe(streak, incStreak(result), setStreak)
-      setShare(result.shareScore)
-      setOpen(true)
-    }
-  }, [result, setOpen, setStreak, streak])
+  const [streak] = useStreak()
   const handleClose = () => {
     setOpen(false)
   }

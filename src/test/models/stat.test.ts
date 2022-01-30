@@ -7,25 +7,30 @@ const boardResults = [
     isSolved: true,
     trials: 4,
     display: "",
+    hasInvalidEntry: false,
   },
   {
     isSolved: true,
     trials: 7,
     display: "",
+    hasInvalidEntry: false,
   },
   {
     isSolved: true,
     trials: 9,
     display: "",
+    hasInvalidEntry: false,
   },
   {
     isSolved: true,
     trials: 5,
     display: "",
+    hasInvalidEntry: false,
   },
 ]
 
 const result: Result = {
+  hasInvalidEntries: false,
   puzzleNumber: 100,
   mode: "four",
   startTime: DateTime.utc().toISO(),

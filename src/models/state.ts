@@ -8,7 +8,6 @@ import {
   applyKey,
   board,
   Board,
-  boardResult,
   display,
   displayBoard,
   Entry,
@@ -109,9 +108,19 @@ export interface DayState {
 }
 
 export interface BoardResult {
+  readonly hasInvalidEntry: boolean
   readonly isSolved: boolean
   readonly trials: number
   readonly display: string
+}
+
+export function boardResult(b: Board): BoardResult {
+  return {
+    isSolved: b.isSolved,
+    trials: b.entries.length,
+    display: displayBoard(b),
+    hasInvalidEntry: b.entries.some((e) => e.isInvalid),
+  }
 }
 
 const encouragement = [
@@ -125,20 +134,20 @@ const encouragement = [
 
 const props = [
   "You did it!",
-  "That was... close!",
+  "A marathon!",
   "Phew!",
-  "You like marathons, don't you?",
-  "Somewhere, someone tried a bit more than you, for sure, maybe?",
-  "I'm telling you, these words are funny!",
+  "You live!",
+  "Finally!",
+  "What a ride!",
 ]
 
 const kudos = [
-  "You are the one. Blue pill or Red pill?",
+  "You are the one!",
   "Are you a secret genius?",
   "Wow!",
   "Lucky, Lucky!",
   "Over the top!",
-  "Impossible!",
+  "No way!",
 ]
 
 export interface Result {
@@ -157,6 +166,7 @@ export interface Result {
   readonly isSolved: boolean
   readonly message: string
   readonly shareTitle: string
+  readonly hasInvalidEntries: boolean
 }
 
 export interface DayResults {
@@ -387,6 +397,7 @@ export function result(s: State, mode: BoardNumber): Result {
     isSolved,
     message,
     shareTitle: titles[mode],
+    hasInvalidEntries: boardResults.some((br) => br.hasInvalidEntry),
   }
 }
 

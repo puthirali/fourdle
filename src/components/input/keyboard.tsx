@@ -1,7 +1,7 @@
 import * as React from "react"
 import {pipe} from "@effect-ts/core/Function"
-import {useTheme} from "@mui/material"
 import Box from "@mui/material/Box"
+import {useTheme} from "@mui/material/styles"
 import {ConfigContext} from "../../context/settings/config"
 import {StateContext} from "../../context/state"
 import type {Key} from "../../models/key"
