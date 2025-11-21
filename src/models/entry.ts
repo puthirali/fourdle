@@ -1,11 +1,14 @@
-import {pipe} from "@effect-ts/core"
-import * as A from "@effect-ts/core/Collections/Immutable/Array"
-import * as R from "@effect-ts/core/Collections/Immutable/Dictionary"
-import type {NonEmptyArray} from "@effect-ts/core/Collections/Immutable/NonEmptyArray"
-import * as NA from "@effect-ts/core/Collections/Immutable/NonEmptyArray"
-import {constant, identity, not} from "@effect-ts/core/Function"
-import * as O from "@effect-ts/core/Option"
-import {matchTag} from "@effect-ts/core/Utils"
+import { pipe, identity } from "effect"
+import * as A from "effect/Array"
+import * as R from "effect/Record"
+import * as O from "effect/Option"
+import * as Match from "effect/Match"
+
+type NonEmptyArray<T> = readonly [T, ...T[]]
+
+// Utility functions
+const constant = <T>(value: T) => () => value
+const not = <T>(fn: (x: T) => boolean) => (x: T) => !fn(x)
 import allWords from "../data/fives"
 import {when} from "../utils"
 import {
@@ -44,7 +47,7 @@ export function areEntriesEqual(e1: Entry, e2: Entry) {
     pipe(
       e1.chars,
       A.zipWith(e2.chars, (a, b) => areKeysEqual(a, b)),
-      A.forAll(identity),
+      A.every(identity),
     )
   )
 }
@@ -74,27 +77,27 @@ export function fromSolution(solution: string): Entry {
 export function apply(key: Key) {
   return (entr: Entry): Entry => {
     const entry = entr.isInvalid ? emptyEntry() : entr
-    return pipe(
-      key,
-      matchTag({
-        Char: (ck): Entry =>
-          isComplete(entry)
-            ? entry
-            : {
-                chars: [...entry.chars, ck],
-                isCommitted: false,
-                isInvalid: false,
-              },
-        Control: (ck): Entry =>
-          ck.ctrl === "BACKSPACE"
-            ? (pipe(
-                NA.fromArray(entry.chars),
-                O.map(NA.init),
-                O.map((chars) => ({chars})),
-                O.getOrElse(emptyEntry),
-              ) as Entry)
-            : entry,
-      }),
+    return Match.value(key).pipe(
+      Match.tag("Char", (ck): Entry =>
+        isComplete(entry)
+          ? entry
+          : {
+              chars: [...entry.chars, ck],
+              isCommitted: false,
+              isInvalid: false,
+            },
+      ),
+      Match.tag("Control", (ck): Entry =>
+        ck.ctrl === "BACKSPACE"
+          ? (pipe(
+              O.fromNullable(entry.chars.length > 0 ? entry.chars : null),
+              O.map((chars) => chars.slice(0, -1)),
+              O.map((chars) => ({chars})),
+              O.getOrElse(emptyEntry),
+            ) as Entry)
+          : entry,
+      ),
+      Match.exhaustive,
     )
   }
 }
@@ -136,14 +139,11 @@ export function toEntry(isCommitted: boolean) {
     pipe(
       dist,
       R.filter((d) => d.length > 0),
-      R.reduceWithIndex(
-        [] as readonly _Dist_[],
-        (c, cs, ds): _Dist_[] => [
-          ...cs,
-          ...ds.map((d) => ({char: c as Char, ...d})),
-        ],
+      R.toEntries,
+      A.flatMap(([c, ds]) =>
+        ds.map((d) => ({char: c as Char, ...d}))
       ),
-      A.sort({compare: (a, b) => (a.index > b.index ? 1 : -1)}),
+      A.sort((a: _Dist_, b: _Dist_) => (a.index > b.index ? 1 : -1)),
       A.map((x) => charKey(x.char, x.mode) as CharKey),
       (chars) => ({chars, isCommitted, isInvalid: false}),
     )
@@ -167,20 +167,17 @@ const emptyCharDist = allChars.reduce(
 function includeChar(c: CharKey, index: number) {
   return (dist: CharDist): CharDist =>
     pipe(
-      dist,
-      R.lookup(c.char),
-      O.getOrElse(constant([])),
+      R.get(dist, c.char),
+      O.getOrElse(constant([] as readonly Dist[])),
       A.append({index, mode: c.mode}),
       (d: readonly Dist[]) => ({...dist, [c.char]: d}),
     )
 }
 
 export function getDistribution(entry: Entry): CharDist {
-  return pipe(
-    entry.chars,
-    A.reduceWithIndex({...emptyCharDist} as CharDist, (index, cd, c) =>
-      pipe(cd, includeChar(c, index)),
-    ),
+  return entry.chars.reduce((cd, c, index) =>
+    pipe(cd, includeChar(c, index)),
+    {...emptyCharDist} as CharDist
   )
 }
 
@@ -218,11 +215,11 @@ export function hasChar(needle: Char, modes: readonly KeyMode[]) {
   return (entry: Entry) =>
     pipe(
       entry.chars,
-      A.find((c) => c.char === needle && modes.includes(c.mode)),
-      O.fold(
-        () => false,
-        () => true,
-      ),
+      A.findFirst((c) => c.char === needle && modes.includes(c.mode)),
+      O.match({
+        onNone: () => false,
+        onSome: () => true,
+      }),
     )
 }
 
@@ -231,9 +228,9 @@ export function normalizeCharDist(solution: string) {
     const solutionDist = pipe(fromSolution(solution), getDistribution)
     return pipe(
       cd,
-      R.mapWithIndex((c, d) =>
-        normalizeDist(d, solutionDist[c as Char]),
-      ),
+      R.toEntries,
+      A.map(([c, d]) => [c, normalizeDist(d, solutionDist[c as Char])] as const),
+      R.fromEntries,
     ) as CharDist
   }
 }
@@ -289,9 +286,8 @@ export const board = (solution: string): Board => ({
   solution,
   currentIndex: 0,
   entries: pipe(
-    5,
-    A.makeBy(() => emptyEntry()),
-    NA.prepend(emptyEntry()),
+    A.makeBy(5, () => emptyEntry()),
+    A.prepend(emptyEntry()),
   ),
   isSolved: false,
 })
@@ -315,7 +311,7 @@ export function onCurrent(f: (e: Entry) => Entry) {
     const tail = b.entries.slice(b.currentIndex + 1)
     return {
       ...b,
-      entries: pipe(init, NA.append(f(current)), NA.concat(tail)),
+      entries: pipe(init, A.append(f(current)), A.appendAll(tail)),
     }
   }
 }
@@ -330,11 +326,11 @@ export function fixEntries(b: Board): Board {
       }
     : pipe(
         b.entries,
-        A.findIndex(not(isComplete)),
-        O.fold(
-          () => pipe(b.entries, NA.append(emptyEntry())),
-          () => b.entries,
-        ),
+        A.findFirstIndex(not(isComplete)),
+        O.match({
+          onNone: () => pipe(b.entries, A.append(emptyEntry())),
+          onSome: () => b.entries,
+        }),
         (es) => ({...b, entries: es}),
       )
 }
@@ -344,7 +340,7 @@ export function nextEntry(b: Board): Board {
     ...b,
     currentIndex: pipe(
       b.entries,
-      A.findIndex(not(isComplete)),
+      A.findFirstIndex(not(isComplete)),
       O.getOrElse(() => b.entries.length - 1),
     ),
   }))
@@ -377,7 +373,7 @@ export function displayBoard(b: Board) {
   return pipe(
     b.entries,
     A.map(display),
-    A.mapWithIndex((i, s) => `${`${i + 1}`.padStart(2, " ")} ${s}`),
+    A.map((s, i) => `${`${i + 1}`.padStart(2, " ")} ${s}`),
     A.join("\n"),
   )
 }

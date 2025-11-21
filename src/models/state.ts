@@ -1,8 +1,7 @@
-import * as A from "@effect-ts/core/Collections/Immutable/Array"
-import * as R from "@effect-ts/core/Collections/Immutable/Dictionary"
-import * as T from "@effect-ts/core/Collections/Immutable/Tuple"
-import {pipe} from "@effect-ts/core/Function"
-import {matchTag} from "@effect-ts/core/Utils"
+import { pipe } from "effect"
+import * as A from "effect/Array"
+import * as R from "effect/Record"
+import * as Match from "effect/Match"
 import {Duration, DateTime} from "luxon"
 import {
   applyKey,
@@ -39,10 +38,8 @@ export const titles: {readonly [k in BoardNumber]: string} = {
 
 const emptyLetterState: LetterState = pipe(
   allChars,
-  A.map((c) =>
-    pipe(T.tuple(), T.append(c), T.append("OPEN" as KeyMode)),
-  ),
-  R.fromArray,
+  A.map((c) => [c, "OPEN" as KeyMode] as const),
+  R.fromEntries,
   (x) => x as LetterState,
 )
 
@@ -53,13 +50,10 @@ function getCharKey(c: Char) {
 
 export function getKey(c: CharP) {
   return (ls: LetterState): Key =>
-    pipe(
-      c,
-      key,
-      matchTag({
-        Char: (ck) => pipe(ls, getCharKey(ck.char)),
-        Control: (ck) => ck,
-      }),
+    Match.value(key(c)).pipe(
+      Match.tag("Char", (ck) => pipe(ls, getCharKey(ck.char)) as Key),
+      Match.tag("Control", (ck) => ck as Key),
+      Match.exhaustive,
     )
 }
 
@@ -206,42 +200,36 @@ export function gameDisplayV(s: State, numRows: number): string {
     A.map((bd) =>
       pipe(bd.split("\n"), A.takeRight(numRows), A.join("\n")),
     ),
-    A.mapWithIndex((i, s) => `#${i}\n${s}`),
+    A.map((s, i) => `#${i}\n${s}`),
     A.join("\n"),
   )
 }
 
 export function gameDisplayH(s: State, numRows: number): string {
   if (!s.isDone) return ""
+  const emptyLines: readonly string[] = [...new Array(numRows)].map(() => "")
   return pipe(
     s.boards,
     A.map((b) => pipe(b.board, displayBoard)),
     A.map((bd) => pipe(bd.split("\n"), A.takeRight(numRows))),
     A.map(
-      (brs) =>
+      (brs): readonly string[] =>
         [
           ...brs,
-          ...pipe(
-            A.replicate_(numRows - brs.length, ""),
-            A.mapWithIndex(
-              (i: number) =>
-                `${`${brs.length + i + 1}`.padStart(
-                  2,
-                  " ",
-                )} ${emptyEntry}`,
-            ),
+          ...[...new Array(numRows - brs.length)].map((_, i: number) =>
+            `${`${brs.length + i + 1}`.padStart(
+              2,
+              " ",
+            )} ${emptyEntry}`,
           ),
         ] as readonly string[],
     ),
-    A.reduce(A.replicate_(numRows, ""), (lines, bds) =>
-      pipe(
-        bds,
-        A.reduceWithIndex(lines, (idx, ls, dr) => [
-          ...(idx > 0 ? pipe(ls, A.take(idx)) : []),
-          `${ls[idx]}${dr} `,
-          ...pipe(ls, A.takeRight(numRows - idx - 1)),
-        ]),
-      ),
+    A.reduce(emptyLines, (lines: readonly string[], bds: readonly string[]) =>
+      bds.reduce((ls: readonly string[], dr: string, idx: number): readonly string[] => [
+        ...(idx > 0 ? ls.slice(0, idx) : []),
+        `${ls[idx]}${dr} `,
+        ...ls.slice(-(numRows - idx - 1)),
+      ], lines),
     ),
     A.join("\n"),
   )
@@ -283,7 +271,7 @@ export function predictSignificantRows(
     pipe(
       sig,
       A.map((ss: readonly number[]) => ss[choice]),
-      A.mapWithIndex((i, n) => significantEntry(i, bs[i], n)),
+      A.map((n, i) => significantEntry(i, bs[i], n)),
     ),
   ]
 }
@@ -322,12 +310,8 @@ type IndexedCountList = readonly IndexedCount[]
 export function minimumDisplay(s: State) {
   if (!s.isDone) return ""
   const sortedIC = pipe(
-    s.boards,
-    A.reduceWithIndex([] as IndexedCountList, (i, trs, bs) => [
-      ...trs,
-      [i, bs.board.entries.length] as IndexedCount,
-    ]),
-    A.sort({compare: (x, y) => (x[1] > y[1] ? 1 : -1)}),
+    s.boards.map((bs, i) => [i, bs.board.entries.length] as IndexedCount),
+    A.sort((x: IndexedCount, y: IndexedCount) => (x[1] > y[1] ? 1 : -1)),
   )
   const idx = sortedIC[0][0]
   const body = pipe(
@@ -366,7 +350,7 @@ export function result(s: State, mode: BoardNumber): Result {
   )
   const isSolved = pipe(
     boardResults,
-    A.forAll((b) => b.isSolved),
+    A.every((b) => b.isSolved),
   )
   const message = isSolved
     ? maxTrials > 12
@@ -464,7 +448,7 @@ export function evalState(s: State): State {
       ...s,
       isDone: pipe(
         s.boards,
-        A.forAll((b) => b.board.isSolved),
+        A.every((b) => b.board.isSolved),
       ),
     }),
     evalLetterState,

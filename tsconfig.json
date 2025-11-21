@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "target": "esnext",
+    "lib": ["ES2020", "dom", "dom.iterable"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -14,13 +10,18 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "jsxImportSource": "@kitajs/html",
+    "paths": {
+      "@components/*": ["./src/duct/components/*"],
+      "@services/*": ["./src/duct/services/*"],
+      "@models/*": ["./src/models/*"],
+      "@data/*": ["./src/data/*"]
+    }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

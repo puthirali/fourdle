@@ -1,9 +1,18 @@
-import type React from "react"
-import {pipe} from "@effect-ts/core"
-import * as A from "@effect-ts/core/Collections/Immutable/Array"
-import * as O from "@effect-ts/core/Option"
-import {matchTag} from "@effect-ts/core/Utils"
-import * as colors from "@mui/material/colors"
+import * as A from "effect/Array"
+import * as O from "effect/Option"
+import * as Match from "effect/Match"
+
+// Color constants to replace MUI colors
+const colors = {
+  grey: {
+    A700: "#616161",
+    A100: "#f5f5f5",
+    900: "#212121",
+  },
+  red: {
+    900: "#b71c1c",
+  },
+}
 
 export type EmptyChar = " "
 export type KeyMode = "MISS" | "HIT" | "BULLSEYE" | "OPEN" | "ERROR"
@@ -83,13 +92,22 @@ export function controlKey(ctrl: Control): Key {
 }
 
 export function areKeysEqual(k1: Key, k2: Key): boolean {
-  return pipe(
-    k1,
-    matchTag({
-      Char: (k) =>
-        k2._tag === "Char" && k2.char === k.char && k2.mode === k.mode,
-      Control: (k) => k2._tag === "Control" && k2.ctrl === k.ctrl,
-    }),
+  return Match.value(k1).pipe(
+    Match.tag("Char", (k) =>
+      k2._tag === "Char" && k2.char === k.char && k2.mode === k.mode,
+    ),
+    Match.tag("Control", (k) => k2._tag === "Control" && k2.ctrl === k.ctrl),
+    Match.exhaustive,
+  )
+}
+
+export function isSameKey(k1: Key, k2: Key): boolean {
+  return Match.value(k1).pipe(
+    Match.tag("Char", (k) =>
+      k2._tag === "Char" && k2.char === k.char,
+    ),
+    Match.tag("Control", (k) => k2._tag === "Control" && k2.ctrl === k.ctrl),
+    Match.exhaustive,
   )
 }
 
@@ -109,12 +127,10 @@ export function key(key: CharP): Key {
 }
 
 export function charP(keyCap: Key): CharP {
-  return pipe(
-    keyCap,
-    matchTag({
-      Char: (ck) => ck.char,
-      Control: (ck) => (ck.ctrl === "BACKSPACE" ? "-" : "+"),
-    }),
+  return Match.value(keyCap).pipe(
+    Match.tag("Char", (ck) => ck.char),
+    Match.tag("Control", (ck) => (ck.ctrl === "BACKSPACE" ? "-" : "+")),
+    Match.exhaustive,
   )
 }
 
@@ -124,15 +140,12 @@ export function isCharP(unk: string): unk is CharP {
 
 export function fromKeyCode(keyCode: string): O.Option<Key> {
   const keyCodeLower = keyCode.toLowerCase()
-  let result: O.Option<Key> = O.none
-  if (keyCodeLower === "enter") {
-    result = O.some(key("+"))
-  } else if (keyCodeLower === "backspace") {
-    result = O.some(key("-"))
-  } else if (isCharP(keyCodeLower)) {
-    result = O.some(key(keyCodeLower))
-  }
-  return result
+  return Match.value(keyCodeLower).pipe(
+    Match.when("enter", () => O.some(key("+"))),
+    Match.when("backspace", () => O.some(key("-"))),
+    Match.when(isCharP, (kc) => O.some(key(kc as CharP))),
+    Match.orElse(() => O.none())
+  )
 }
 
 export const emptyChar: CharKey = charKey(" ") as CharKey
@@ -153,19 +166,17 @@ export const error = withMode("ERROR")
 
 export function forChar(f: (c: CharKey) => CharKey) {
   return (key: Key): Key =>
-    pipe(
-      key,
-      matchTag({
-        Char: (ck) => f(ck) as Key,
-        Control: (ck) => ck,
-      }),
+    Match.value(key).pipe(
+      Match.tag("Char", (ck) => f(ck) as Key),
+      Match.tag("Control", (ck) => ck as Key),
+      Match.exhaustive,
     )
 }
 
 export interface KeyColorRequest {
   readonly keyCap: Key
   readonly makeAccessible: boolean
-  readonly props: Readonly<React.CSSProperties>
+  readonly props: Readonly<Record<string, string | number>>
 }
 
 export function keyColor(mode: KeyMode, makeAccessible: boolean) {
@@ -187,8 +198,8 @@ export function keyStyle({
   keyCap,
   makeAccessible,
   props,
-}: KeyColorRequest): React.CSSProperties {
-  const base: React.CSSProperties = {
+}: KeyColorRequest): Record<string, string | number> {
+  const base: Record<string, string | number> = {
     backgroundColor: colors.grey.A700,
     borderColor: colors.grey.A700,
     borderWidth: "1px",
@@ -198,14 +209,12 @@ export function keyStyle({
     fontWeight: "bold",
     ...props,
   }
-  return pipe(
-    keyCap,
-    matchTag({
-      Char: (ck) => ({
-        ...base,
-        backgroundColor: keyColor(ck.mode, makeAccessible),
-      }),
-      Control: () => ({...base, flex: 1.25, maxWidth: "96px"}),
-    }),
+  return Match.value(keyCap).pipe(
+    Match.tag("Char", (ck) => ({
+      ...base,
+      backgroundColor: keyColor(ck.mode, makeAccessible),
+    })),
+    Match.tag("Control", () => ({...base, flex: 1.25, maxWidth: "96px"})),
+    Match.exhaustive,
   )
 }

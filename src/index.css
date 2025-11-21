@@ -5,8 +5,394 @@ body {
   -moz-osx-font-smoothing: grayscale;
   max-width: 100vw;
   overflow: hidden;
+  background-color: #1e1e1e;
+  color: #f5f5f5;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Base key button styles */
+.key-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  outline: 0;
+  border: 1px solid rgb(97, 97, 97);
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+  appearance: none;
+  text-decoration: none;
+  font-family: Montserrat, Helvetica, Arial, sans-serif;
+  line-height: 1.75;
+  text-transform: uppercase;
+  border-radius: 4px;
+  transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
+  background-color: rgb(97, 97, 97);
+  color: rgb(245, 245, 245);
+  text-align: center;
+  font-weight: 700;
+  min-width: auto;
+  min-height: auto;
+  padding: 0.2em;
+  margin: 0.2em;
+  flex-direction: column;
+  flex: 1 1 0%;
+}
+
+/* Button pressed/active state */
+.key-button:active {
+  transform: translateY(2px);
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 1px 1px -1px, rgba(0, 0, 0, 0.14) 0px 1px 1px 0px, rgba(0, 0, 0, 0.12) 0px 1px 2px 0px;
+}
+
+.key-button:hover {
+  filter: brightness(1.1);
+}
+
+/* Keypress animation */
+@keyframes key-press-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    filter: brightness(1.4);
+  }
+  50% {
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.3);
+    filter: brightness(1.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    filter: brightness(1);
+  }
+}
+
+.key-button.key-pressed {
+  animation: key-press-flash 0.5s ease-out;
+}
+
+/* Board solved celebration animation */
+@keyframes celebrate-solution {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  15% {
+    transform: scale(1.05) translateY(-8px);
+  }
+  30% {
+    transform: scale(0.98) translateY(4px);
+  }
+  45% {
+    transform: scale(1.02) translateY(-4px);
+  }
+  60% {
+    transform: scale(1) translateY(2px);
+  }
+  75% {
+    transform: scale(1) translateY(-1px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Screen height variants - character keys are square */
+.key-button.screen-tall {
+  font-size: 2rem;
+  width: 64px;
+  height: 64px;
+  max-width: 64px;
+  max-height: 64px;
+}
+
+.key-button.screen-medium {
+  font-size: 1.5rem;
+  width: 64px;
+  height: 64px;
+  max-width: 64px;
+  max-height: 64px;
+}
+
+.key-button.screen-tiny {
+  font-size: 1rem;
+  width: 64px;
+  height: 64px;
+  max-width: 64px;
+  max-height: 64px;
+}
+
+/* Character key mode variants */
+.key-button.mode-OPEN {
+  background-color: #616161;
+}
+
+.key-button.mode-MISS {
+  background-color: #212121;
+}
+
+.key-button.mode-BULLSEYE {
+  background-color: #1C8C38;
+}
+
+.accessible .key-button.mode-BULLSEYE {
+  background-color: #009E73;
+}
+
+.key-button.mode-HIT {
+  background-color: #E0AF1B;
+}
+
+.accessible .key-button.mode-HIT {
+  background-color: #D55E00;
+}
+
+.key-button.mode-ERROR {
+  background-color: #b71c1c;
+}
+
+.accessible .key-button.mode-ERROR {
+  background-color: #CC79A7;
+}
+
+/* Control key specific styles - wider but same height as character keys */
+.key-button.ctrl-key {
+  flex: 1.25;
+  max-width: 96px;
+  width: auto;
+}
+
+.key-button.ctrl-key.screen-tall {
+  height: 64px;
+  max-height: 64px;
+}
+
+.key-button.ctrl-key.screen-medium {
+  height: 64px;
+  max-height: 64px;
+}
+
+.key-button.ctrl-key.screen-tiny {
+  height: 64px;
+  max-height: 64px;
+}
+
+/* Control key icon sizes */
+.ctrl-key svg {
+  width: 2em;
+  height: 2em;
+}
+
+.ctrl-key.screen-tall svg {
+  font-size: 2rem;
+}
+
+.ctrl-key.screen-medium svg {
+  font-size: 1rem;
+}
+
+.ctrl-key.screen-tiny svg {
+  font-size: 0.8rem;
+}
+
+/* Slot card flip container */
+.slot-container {
+  display: inline-flex;
+  margin: 4px;
+  perspective: 1000px;
+}
+
+.slot-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slot-face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  outline: 0;
+  border: 1px solid rgb(97, 97, 97);
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+  appearance: none;
+  text-decoration: none;
+  font-family: Montserrat, Helvetica, Arial, sans-serif;
+  line-height: 1;
+  text-transform: uppercase;
+  border-radius: 4px;
+  transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
+  background-color: rgb(97, 97, 97);
+  color: rgb(245, 245, 245);
+  text-align: center;
+  font-weight: 700;
+  padding: 0;
+  margin: 0;
+}
+
+/* Slots in solution entries have no border or shadow */
+.entry.solution .slot-face {
+  border-width: 0px;
+  box-shadow: none;
+}
+
+/* Front face (OPEN mode) */
+.slot-front {
+  background-color: #616161;
+}
+
+/* Back face mode colors */
+.slot-back.mode-MISS {
+  background-color: #212121;
+}
+
+.slot-back.mode-BULLSEYE {
+  background-color: #1C8C38;
+}
+
+.accessible .slot-back.mode-BULLSEYE {
+  background-color: #009E73;
+}
+
+.slot-back.mode-HIT {
+  background-color: #E0AF1B;
+}
+
+.accessible .slot-back.mode-HIT {
+  background-color: #D55E00;
+}
+
+.slot-back.mode-ERROR {
+  background-color: #b71c1c;
+}
+
+.accessible .slot-back.mode-ERROR {
+  background-color: #CC79A7;
+}
+
+/* Vertical flip transformation */
+.slot-container.flip-vertical .slot-back {
+  transform: rotateX(180deg);
+}
+
+.slot-container.flip-vertical.flipped .slot-card {
+  transform: rotateX(180deg);
+}
+
+/* Horizontal flip transformation */
+.slot-container.flip-horizontal .slot-back {
+  transform: rotateY(180deg);
+}
+
+.slot-container.flip-horizontal.flipped .slot-card {
+  transform: rotateY(180deg);
+}
+
+/* Entry styles */
+.entry {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 4px;
+  border-style: solid;
+}
+
+.entry.solution {
+  background-color: #1C8C38;
+  border-color: #212121;
+  animation: celebrate-solution 1s ease-in-out;
+}
+
+.accessible .entry.solution {
+  background-color: #009E73;
+}
+
+/* Board styles */
+.board {
+  display: flex;
+  flex-direction: column;
+  align-content: space-evenly;
+  justify-content: space-evenly;
+  flex-grow: 0;
+}
+
+.board[data-solved="true"] {
+  justify-content: center;
+  align-content: center;
+}
+
+.board-entry-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.board[data-solved="true"] .board-entry-row {
+  flex-grow: 0;
+}
+
+.board[data-solved="true"] .entry[data-entry-complete="false"] {
+  display: none;
+}
+
+.board[data-solved="true"] .board-entry-row:has(.entry[data-entry-complete="false"]) {
+  display: none;
+}
+
+.board-entry-number {
+  color: #424242;
+  width: 2em;
+  text-align: right;
+}
+
+/* Game layout */
+.fourdle-app {
+  width: 100%;
+  height: 100vh;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  align-items: center;
+}
+
+.header {
+  padding: 1rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.boards-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-content: space-evenly;
+  flex-grow: 1;
+  max-width: 1800px;
+  width: 100%;
+  gap: 1rem;
+  padding: 1rem;
 }

@@ -1,4 +1,4 @@
-import {pipe} from "@effect-ts/core/Function"
+import { pipe } from "effect"
 import {BoardNumber, Result} from "./state"
 
 export interface Stats {

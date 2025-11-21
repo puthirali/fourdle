@@ -1,4 +1,4 @@
-import {pipe} from "@effect-ts/core"
+import { pipe } from "effect"
 import {
   areDistributionsEqual,
   checkEntry,
