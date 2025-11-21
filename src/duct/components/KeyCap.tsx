@@ -1,10 +1,8 @@
 import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps } from "@duct-ui/core/blueprint"
-import { pipe } from "effect"
 import * as Match from "effect/Match"
 import type { CharKey, ControlKey, Key } from "@models/key"
 import { isSameKey } from "@models/key"
 import { getStateService } from "@services/state-service"
-import { getKey } from "@models/state"
 
 // Props for KeyCap component
 export interface KeyCapProps {
@@ -99,24 +97,6 @@ function bind(el: HTMLElement, _eventEmitter: any, props: KeyCapProps): { releas
     }
   }
 
-  // Update button mode based on state changes (only for CharKey)
-  const updateFromState = () => {
-    if (keyCap._tag === 'Char' && button) {
-      const currentState = stateService.getCurrentState()
-      const letterState = currentState.letterState
-      const updatedKey = pipe(letterState, getKey(keyCap.char))
-
-      if (updatedKey._tag === 'Char') {
-        // Update the mode class
-        button.classList.remove('mode-OPEN', 'mode-MISS', 'mode-HIT', 'mode-BULLSEYE', 'mode-ERROR')
-        button.classList.add(`mode-${updatedKey.mode}`)
-
-        // Update the stored key data with new mode
-        button.setAttribute('data-key', JSON.stringify(updatedKey))
-      }
-    }
-  }
-
   // Listen for keyPressed events from state service (for keyboard input animation)
   const handleKeyPressed = (pressedKey: Key) => {
     // Check if this is the key that was pressed (ignore mode)
@@ -127,29 +107,45 @@ function bind(el: HTMLElement, _eventEmitter: any, props: KeyCapProps): { releas
     }
   }
 
-  // Subscribe to state changes (only for CharKey)
-  const handleStateChange = () => {
-    updateFromState()
-  }
-
+  // Subscribe to keycap-specific event (only for CharKey)
   if (keyCap._tag === 'Char') {
-    stateService.on('stateChanged', handleStateChange)
-    // Initialize with current state on first render
-    updateFromState()
-  }
+    const keycapEventName = `keycap:${keyCap.char}` as any
+    const handleKeycapChange = (newMode: any) => {
+      if (button) {
+        // Update the mode class
+        button.classList.remove('mode-OPEN', 'mode-MISS', 'mode-HIT', 'mode-BULLSEYE', 'mode-ERROR')
+        button.classList.add(`mode-${newMode}`)
 
-  // Subscribe to keyPressed events for animation
-  stateService.on('keyPressed', handleKeyPressed)
-
-  el.addEventListener('click', handleClick)
-
-  return {
-    release: () => {
-      if (keyCap._tag === 'Char') {
-        stateService.off('stateChanged', handleStateChange)
+        // Update the stored key data with new mode
+        const updatedKey = { ...keyCap, mode: newMode }
+        button.setAttribute('data-key', JSON.stringify(updatedKey))
       }
-      stateService.off('keyPressed', handleKeyPressed)
-      el.removeEventListener('click', handleClick)
+    }
+
+    stateService.on(keycapEventName, handleKeycapChange)
+
+    // Subscribe to keyPressed events for animation
+    stateService.on('keyPressed', handleKeyPressed)
+
+    el.addEventListener('click', handleClick)
+
+    return {
+      release: () => {
+        stateService.off(keycapEventName, handleKeycapChange)
+        stateService.off('keyPressed', handleKeyPressed)
+        el.removeEventListener('click', handleClick)
+      }
+    }
+  } else {
+    // For control keys, only need keyPressed for animation
+    stateService.on('keyPressed', handleKeyPressed)
+    el.addEventListener('click', handleClick)
+
+    return {
+      release: () => {
+        stateService.off('keyPressed', handleKeyPressed)
+        el.removeEventListener('click', handleClick)
+      }
     }
   }
 }

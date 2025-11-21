@@ -2,7 +2,6 @@ import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps,
 import Entry from "./Entry"
 import { type Board as BoardModel, lastEntered } from "@models/entry"
 import { getStateService } from "@services/state-service"
-import type { State } from "@models/state"
 
 // Props for Board component
 export interface BoardProps {
@@ -57,29 +56,18 @@ function bind(el: HTMLElement, _eventEmitter: any, props: BoardProps): BindRetur
   const { boardIndex } = props
   const stateService = getStateService()
 
-  const updateSolvedState = (state: State) => {
-    const board = state.boards[boardIndex]
-    if (!board) return
-
-    const isSolved = board.board.isSolved
-
-    // Update data-solved attribute for CSS styling
+  // Subscribe to board-specific event
+  const boardEventName = `board:${boardIndex}` as any
+  const handleBoardChange = (boardState: any) => {
+    const isSolved = boardState.board.isSolved
     el.setAttribute('data-solved', String(isSolved))
   }
 
-  // Subscribe to state changes
-  const handleStateChange = (state: State) => {
-    updateSolvedState(state)
-  }
-
-  stateService.on('stateChanged', handleStateChange)
-
-  // Initialize on mount
-  updateSolvedState(stateService.getCurrentState())
+  stateService.on(boardEventName, handleBoardChange)
 
   return {
     release: () => {
-      stateService.off('stateChanged', handleStateChange)
+      stateService.off(boardEventName, handleBoardChange)
     }
   }
 }

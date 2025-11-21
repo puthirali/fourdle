@@ -3,7 +3,6 @@ import Slot from "./Slot"
 import type { Entry as EntryModel } from "@models/entry"
 import { emptyChar } from "@models/key"
 import { getStateService } from "@services/state-service"
-import type { State } from "@models/state"
 
 // Props for Entry component
 export interface EntryProps {
@@ -58,38 +57,29 @@ function bind(el: HTMLElement, _eventEmitter: any, props: EntryProps): BindRetur
   const { boardIndex, entryIndex, actualEntryIndex } = props
   const stateService = getStateService()
 
-  const updateEntry = (state: State) => {
-    const board = state.boards[boardIndex]
-    if (!board) return
-
-    const entry = board.board.entries[entryIndex]
-    if (!entry) return
-
+  // Subscribe to entry-specific event
+  const entryEventName = `entry:${boardIndex}:${entryIndex}` as any
+  const handleEntryChange = (entry: any) => {
     // Update data-entry-complete attribute
     const isComplete = entry.isCommitted && entry.chars.length === 5
     el.setAttribute('data-entry-complete', String(isComplete))
+  }
 
-    // Update solution class
-    const isSolved = board.board.isSolved
-    const isSolution = isSolved && board.board.currentIndex === actualEntryIndex
-
-    // Update solution class
+  // Subscribe to board-specific event for solution state
+  const boardEventName = `board:${boardIndex}` as any
+  const handleBoardChange = (boardState: any) => {
+    const isSolved = boardState.board.isSolved
+    const isSolution = isSolved && boardState.board.currentIndex === actualEntryIndex
     el.classList.toggle('solution', isSolution)
   }
 
-  // Subscribe to state changes
-  const handleStateChange = (state: State) => {
-    updateEntry(state)
-  }
-
-  stateService.on('stateChanged', handleStateChange)
-
-  // Initialize on mount
-  updateEntry(stateService.getCurrentState())
+  stateService.on(entryEventName, handleEntryChange)
+  stateService.on(boardEventName, handleBoardChange)
 
   return {
     release: () => {
-      stateService.off('stateChanged', handleStateChange)
+      stateService.off(entryEventName, handleEntryChange)
+      stateService.off(boardEventName, handleBoardChange)
     }
   }
 }

@@ -1,5 +1,6 @@
 import { ObservableV2 as Observable } from 'lib0/observable'
 import { pipe } from "effect"
+import * as Match from "effect/Match"
 import { DateTime } from "luxon"
 import allWords from "@data/fives"
 import w2 from "@data/w2"
@@ -12,12 +13,173 @@ import {
   type DayState,
   type DayWords,
   fromWords,
+  handleClearInvalid,
   handleKeyPress,
   newGame,
   type State,
   type BoardNumber,
 } from "../../models/state"
 import { emptyStreak, type Streak } from "../../models/streak"
+
+// Granular change types
+type SlotChange = {
+  type: 'slot'
+  boardIndex: number
+  entryIndex: number
+  slotIndex: number
+  data: {
+    char: any
+    isCommitted: boolean
+    isInvalid: boolean
+  }
+}
+
+type EntryChange = {
+  type: 'entry'
+  boardIndex: number
+  entryIndex: number
+  data: any
+}
+
+type BoardChange = {
+  type: 'board'
+  boardIndex: number
+  data: any
+}
+
+type KeycapChange = {
+  type: 'keycap'
+  char: string
+  data: any
+}
+
+type GranularChange = SlotChange | EntryChange | BoardChange | KeycapChange
+
+// Pure function: compute changes between old and new state
+function computeChanges(oldState: State, newState: State): GranularChange[] {
+  const changes: GranularChange[] = []
+
+  // Compare each board
+  oldState.boards.forEach((oldBoard, boardIndex) => {
+    const newBoard = newState.boards[boardIndex]
+    if (!newBoard) return
+
+    // Check if board-level properties changed
+    if (oldBoard.board.isSolved !== newBoard.board.isSolved ||
+        oldBoard.board.currentIndex !== newBoard.board.currentIndex) {
+      changes.push({
+        type: 'board',
+        boardIndex,
+        data: newBoard
+      })
+    }
+
+    // Compare each entry
+    oldBoard.board.entries.forEach((oldEntry, entryIndex) => {
+      const newEntry = newBoard.board.entries[entryIndex]
+      if (!newEntry) return
+
+      // Check if entry-level properties changed
+      if (oldEntry.isCommitted !== newEntry.isCommitted ||
+          oldEntry.isInvalid !== newEntry.isInvalid ||
+          oldEntry.chars.length !== newEntry.chars.length) {
+        changes.push({
+          type: 'entry',
+          boardIndex,
+          entryIndex,
+          data: newEntry
+        })
+      }
+
+      // Compare each slot in the entry
+      const maxSlots = Math.max(oldEntry.chars.length, newEntry.chars.length, 5)
+      for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
+        const oldChar = oldEntry.chars[slotIndex]
+        const newChar = newEntry.chars[slotIndex]
+
+        // Check if slot changed
+        if (oldChar?.char !== newChar?.char || oldChar?.mode !== newChar?.mode) {
+          changes.push({
+            type: 'slot',
+            boardIndex,
+            entryIndex,
+            slotIndex,
+            data: {
+              char: newChar,
+              isCommitted: newEntry.isCommitted,
+              isInvalid: newEntry.isInvalid
+            }
+          })
+        }
+      }
+    })
+  })
+
+  // Compare keyboard keys
+  Object.keys(newState.letterState).forEach((char) => {
+    const oldMode = (oldState.letterState as any)[char]
+    const newMode = (newState.letterState as any)[char]
+    if (oldMode !== newMode) {
+      changes.push({
+        type: 'keycap',
+        char,
+        data: newMode
+      })
+    }
+  })
+
+  return changes
+}
+
+// Pure function: compute all changes for initial state
+function computeAllChanges(state: State): GranularChange[] {
+  const changes: GranularChange[] = []
+
+  // Emit all board/entry/slot states
+  state.boards.forEach((boardState, boardIndex) => {
+    changes.push({
+      type: 'board',
+      boardIndex,
+      data: boardState
+    })
+
+    boardState.board.entries.forEach((entry, entryIndex) => {
+      changes.push({
+        type: 'entry',
+        boardIndex,
+        entryIndex,
+        data: entry
+      })
+
+      for (let slotIndex = 0; slotIndex < 5; slotIndex++) {
+        const char = entry.chars[slotIndex]
+        changes.push({
+          type: 'slot',
+          boardIndex,
+          entryIndex,
+          slotIndex,
+          data: {
+            char: char,
+            isCommitted: entry.isCommitted,
+            isInvalid: entry.isInvalid
+          }
+        })
+      }
+    })
+  })
+
+  // Emit all keycap states
+  Object.keys(state.letterState).forEach((char) => {
+    const mode = (state.letterState as any)[char]
+    changes.push({
+      type: 'keycap',
+      char,
+      data: mode
+    })
+  })
+
+  return changes
+}
 
 // Events emitted by the state service
 export interface StateEvents {
@@ -26,6 +188,12 @@ export interface StateEvents {
   resultsChanged: (results: DayResults) => void
   modeChanged: (mode: BoardNumber) => void
   keyPressed: (key: Key) => void
+  invalidEntrySubmitted: () => void
+  // Granular change events using address pattern: board#entry@slot
+  [key: `slot:${number}:${number}:${number}`]: (slotData: any) => void
+  [key: `entry:${number}:${number}`]: (entryData: any) => void
+  [key: `board:${number}`]: (boardData: any) => void
+  [key: `keycap:${string}`]: (keyData: any) => void
 }
 
 // Singleton state service using Observable pattern
@@ -34,6 +202,9 @@ class StateService {
   private dayState: DayState
   private mode: BoardNumber = 'four'
   private results: DayResults
+  private previousState: State | null = null
+  private invalidEntryTimeout: ReturnType<typeof setTimeout> | null = null
+  private readonly INVALID_ENTRY_TIMEOUT_MS = 1200
 
   constructor() {
     this.observable = new Observable()
@@ -92,10 +263,70 @@ class StateService {
     localStorage.setItem('day-state', JSON.stringify(this.dayState))
   }
 
+  private checkForInvalidEntries(state: State): boolean {
+    return state.boards.some(boardState =>
+      boardState.board.entries.some(entry => entry.isInvalid)
+    )
+  }
+
+  private scheduleInvalidEntryClear() {
+    // Clear any existing timeout
+    if (this.invalidEntryTimeout) {
+      clearTimeout(this.invalidEntryTimeout)
+    }
+
+    // Schedule clearing of invalid entries
+    this.invalidEntryTimeout = setTimeout(() => {
+      this.clearInvalidEntries()
+      this.invalidEntryTimeout = null
+    }, this.INVALID_ENTRY_TIMEOUT_MS)
+  }
+
   private emitChanges() {
+    const currentState = this.getCurrentState()
+
+    // Phase 1: Compute changes (pure data transformation)
+    const changes = this.previousState
+      ? computeChanges(this.previousState, currentState)
+      : computeAllChanges(currentState)
+
+    // Store current as previous for next comparison
+    this.previousState = JSON.parse(JSON.stringify(currentState))
+
+    // Phase 2: Emit events (side effects)
+    changes.forEach(change => this.emitGranularChange(change))
+
+    // Emit broad events
     this.observable.emit('dayStateChanged', [this.dayState])
-    this.observable.emit('stateChanged', [this.getCurrentState(), this.mode])
+    this.observable.emit('stateChanged', [currentState, this.mode])
     this.observable.emit('resultsChanged', [this.results])
+
+    // Phase 3: Check for invalid entries and schedule clearing
+    const hasInvalid = this.checkForInvalidEntries(currentState)
+    if (hasInvalid) {
+      this.observable.emit('invalidEntrySubmitted', [])
+      this.scheduleInvalidEntryClear()
+    }
+  }
+
+  private emitGranularChange(change: GranularChange) {
+    pipe(
+      change,
+      Match.value,
+      Match.when({ type: 'slot' }, (c: SlotChange) => {
+        this.observable.emit(`slot:${c.boardIndex}:${c.entryIndex}:${c.slotIndex}` as any, [c.data])
+      }),
+      Match.when({ type: 'entry' }, (c: EntryChange) => {
+        this.observable.emit(`entry:${c.boardIndex}:${c.entryIndex}` as any, [c.data])
+      }),
+      Match.when({ type: 'board' }, (c: BoardChange) => {
+        this.observable.emit(`board:${c.boardIndex}` as any, [c.data])
+      }),
+      Match.when({ type: 'keycap' }, (c: KeycapChange) => {
+        this.observable.emit(`keycap:${c.char}` as any, [c.data])
+      }),
+      Match.exhaustive
+    )
   }
 
   // Public API
@@ -128,6 +359,23 @@ class StateService {
 
     const currentState = this.getCurrentState()
     const newState = pipe(currentState, handleKeyPress(key))
+
+    this.dayState = {
+      puzzleNumber: this.dayState.puzzleNumber,
+      states: {
+        ...this.dayState.states,
+        [this.mode]: newState,
+      },
+    }
+
+    this.results = dayResults(this.dayState)
+    this.saveDayState()
+    this.emitChanges()
+  }
+
+  clearInvalidEntries() {
+    const currentState = this.getCurrentState()
+    const newState = handleClearInvalid(currentState)
 
     this.dayState = {
       puzzleNumber: this.dayState.puzzleNumber,

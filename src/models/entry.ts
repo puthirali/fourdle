@@ -358,6 +358,12 @@ export function checkSolution(b: Board): Board {
   )
 }
 
+export function clearInvalidEntry(b: Board): Board {
+  return pipe(b, onCurrent((entry) =>
+    entry.isInvalid ? emptyEntry() : entry
+  ))
+}
+
 export const applyKey = (key: Key) => {
   return (b: Board): Board =>
     b.isSolved

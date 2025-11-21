@@ -7,6 +7,7 @@ import {
   applyKey,
   board,
   Board,
+  clearInvalidEntry,
   display,
   displayBoard,
   Entry,
@@ -467,6 +468,10 @@ export function onBoards(f: (b: Board) => Board) {
       A.map((bs) => ({...bs, board: f(bs.board)})),
     ),
   })
+}
+
+export function handleClearInvalid(s: State): State {
+  return pipe(s, onBoards(clearInvalidEntry), evalState)
 }
 
 export function handleKeyPress(key: Key) {

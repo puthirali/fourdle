@@ -16,5 +16,18 @@
     },
     "[javascriptreact]": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    }
+    },
+    "cSpell.words": [
+        "backface",
+        "Consolas",
+        "eslintcache",
+        "fourdle",
+        "grayscale",
+        "keycap",
+        "keyrow",
+        "luxon",
+        "Menlo",
+        "rgba",
+        "testmondata"
+    ]
 }

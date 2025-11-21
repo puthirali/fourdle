@@ -2,7 +2,6 @@ import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps,
 import { getStateService } from "@services/state-service"
 import type { CharKey } from "@models/key"
 import { emptyChar } from "@models/key"
-import type { State } from "@models/state"
 
 // Props for Slot component
 export interface SlotProps {
@@ -77,18 +76,12 @@ function bind(el: HTMLElement, _eventEmitter: any, props: SlotProps): BindReturn
   const { boardIndex, entryIndex, slotIndex } = props
   const stateService = getStateService()
 
-  // Function to update DOM based on current state
-  const updateFromState = (state: State) => {
-    const board = state.boards[boardIndex]
-    if (!board) return
-
-    const entries = board.board.entries
-    const entry = entries[entryIndex]
-    if (!entry) return
-
-    const keyCap = entry.chars.length <= slotIndex ? emptyChar : entry.chars[slotIndex]
-    const isCommitted = entry.isCommitted
-    const isInvalid = entry.isInvalid
+  // Subscribe to granular slot-specific event
+  const eventName = `slot:${boardIndex}:${entryIndex}:${slotIndex}` as any
+  const handleSlotChange = (slotData: any) => {
+    const keyCap = slotData.char || emptyChar
+    const isCommitted = slotData.isCommitted
+    const isInvalid = slotData.isInvalid
 
     const text = keyCap.char.trim() === "" ? "\u00A0" : keyCap.char.toUpperCase()
     const isFlipped = isCommitted || isInvalid
@@ -109,16 +102,11 @@ function bind(el: HTMLElement, _eventEmitter: any, props: SlotProps): BindReturn
     }
   }
 
-  // Subscribe to state changes
-  const handleStateChange = (state: State) => {
-    updateFromState(state)
-  }
-
-  stateService.on('stateChanged', handleStateChange)
+  stateService.on(eventName, handleSlotChange)
 
   return {
     release: () => {
-      stateService.off('stateChanged', handleStateChange)
+      stateService.off(eventName, handleSlotChange)
     }
   }
 }

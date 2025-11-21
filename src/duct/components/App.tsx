@@ -2,6 +2,7 @@ import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps,
 import { createStateService } from "@services/state-service"
 import Board from "./Board"
 import Keyboard from "./Keyboard"
+import InvalidEntryAlert from "./InvalidEntryAlert"
 
 export interface AppEvents extends BaseComponentEvents {}
 
@@ -26,6 +27,7 @@ function render(props: BaseProps<AppProps>) {
           {/* Boards will be rendered in bind() */}
         </div>
         <Keyboard screenHeight="MEDIUM" />
+        <InvalidEntryAlert />
       </div>
     </div>
   )
