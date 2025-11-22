@@ -1,4 +1,4 @@
-import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps } from "@duct-ui/core/blueprint"
+import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps, type BindReturn } from "@duct-ui/core/blueprint"
 import { pipe } from "effect"
 import * as O from "effect/Option"
 import { keyboard, type Key, allChars, type KeyMode, fromKeyCode } from "@models/key"
@@ -43,7 +43,7 @@ function render(props: BaseProps<KeyboardProps>) {
   )
 }
 
-function bind(el: HTMLElement): { release: () => void } {
+function bind(el: HTMLElement): BindReturn<KeyboardLogic> {
   const stateService = getStateService()
 
   // Listen to key press events from KeyRow components (button clicks)

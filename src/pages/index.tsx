@@ -9,11 +9,10 @@ export function getPageMeta(): PageMeta {
   return {
     title: '4 * wordle',
     description: '4 * wordle - Four simultaneous Wordle games',
-    scripts: ['/src/duct/pages/index.tsx']
   }
 }
 
-const HomePage: DuctPageComponent = ({ meta, path, env }) => {
+const HomePage: DuctPageComponent = () => {
   return <App />
 }
 

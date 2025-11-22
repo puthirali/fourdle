@@ -2,10 +2,10 @@ import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps,
 import { createRef } from "@duct-ui/core/ref"
 import Modal, { type ModalLogic } from "@duct-ui/components/layout/modal"
 import { getStateService } from "@services/state-service"
-import type { BoardNumber, DayResults, Result } from "../../models/state"
-import type { GameStats, Streak } from "../../models/streak"
-import { modesRemaining, overallStats, trialCount } from "../../models/streak"
-import { titles } from "../../models/state"
+import type { BoardNumber, DayResults, Result } from "@models/state"
+import type { GameStats, Streak } from "@models/streak"
+import { modesRemaining, overallStats, trialCount } from "@models/streak"
+import { titles } from "@models/state"
 
 export interface SummaryModalProps {
   isOpen?: boolean

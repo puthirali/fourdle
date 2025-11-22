@@ -1,6 +1,6 @@
 export default {
-  pagesDir: 'src/duct/pages',
-  layoutsDir: 'src/duct/layouts',
+  pagesDir: 'src/pages',
+  layoutsDir: 'src/layouts',
   env: {
     SITE_NAME: 'Fourdle',
     SITE_URL: 'http://localhost:3001',

@@ -9,8 +9,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@components": resolve(__dirname, "./src/duct/components"),
-      "@services": resolve(__dirname, "./src/duct/services"),
+      "@components": resolve(__dirname, "./src/components"),
+      "@services": resolve(__dirname, "./src/services"),
       "@models": resolve(__dirname, "./src/models"),
       "@data": resolve(__dirname, "./src/data"),
     }

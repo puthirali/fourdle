@@ -6,7 +6,7 @@ import allWords from "@data/fives"
 import w2 from "@data/w2"
 import w3 from "@data/w3"
 import w4 from "@data/w4"
-import type { Key } from "../../models/key"
+import type { Key } from "@models/key"
 import {
   dayResults,
   type DayResults,
@@ -18,8 +18,8 @@ import {
   newGame,
   type State,
   type BoardNumber,
-} from "../../models/state"
-import { emptyStreak, incStreak, type Streak } from "../../models/streak"
+} from "@models/state"
+import { emptyStreak, incStreak, type Streak } from "@models/streak"
 
 // Granular change types
 type SlotChange = {

@@ -54,7 +54,7 @@ function render(props: BaseProps<EntryProps>) {
 }
 
 function bind(el: HTMLElement, _eventEmitter: any, props: EntryProps): BindReturn<EntryLogic> {
-  const { boardIndex, entryIndex, actualEntryIndex } = props
+  const { boardIndex, actualEntryIndex } = props
   const stateService = getStateService()
 
   // Subscribe to entry-specific event using actualEntryIndex

@@ -17,8 +17,8 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@kitajs/html",
     "paths": {
-      "@components/*": ["./src/duct/components/*"],
-      "@services/*": ["./src/duct/services/*"],
+      "@components/*": ["./src/components/*"],
+      "@services/*": ["./src/services/*"],
       "@models/*": ["./src/models/*"],
       "@data/*": ["./src/data/*"]
     }

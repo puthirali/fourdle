@@ -3,8 +3,8 @@ import { createRef } from "@duct-ui/core/ref"
 import Modal, { type ModalLogic } from "@duct-ui/components/layout/modal"
 import Select, { type SelectItem, type SelectLogic } from "@duct-ui/components/dropdown/select"
 import { getStateService } from "@services/state-service"
-import type { BoardNumber } from "../../models/state"
-import { titles } from "../../models/state"
+import type { BoardNumber } from "@models/state"
+import { titles } from "@models/state"
 
 export interface SettingsModalProps {
   isOpen?: boolean

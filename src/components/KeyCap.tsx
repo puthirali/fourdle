@@ -1,4 +1,4 @@
-import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps } from "@duct-ui/core/blueprint"
+import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps, type BindReturn } from "@duct-ui/core/blueprint"
 import * as Match from "effect/Match"
 import type { CharKey, ControlKey, Key } from "@models/key"
 import { isSameKey } from "@models/key"
@@ -72,7 +72,7 @@ function render(props: BaseProps<KeyCapProps>) {
   ) as JSX.Element
 }
 
-function bind(el: HTMLElement, _eventEmitter: any, props: KeyCapProps): { release: () => void } {
+function bind(el: HTMLElement, _eventEmitter: any, props: KeyCapProps): BindReturn<KeyCapLogic> {
   const { keyCap } = props
   const stateService = getStateService()
 

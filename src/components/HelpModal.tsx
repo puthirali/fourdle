@@ -83,8 +83,6 @@ function render(props: BaseProps<HelpModalProps>) {
 }
 
 function bind(_el: HTMLElement, _eventEmitter: any, _props: HelpModalProps): BindReturn<HelpModalLogic> {
-
-
   return {
     open: () => {
       const modalLogic = innerModalRef.current
