@@ -30,7 +30,7 @@ function render(props: BaseProps<EntryProps>) {
   return (
     <div
       class={`entry ${solutionClass}`.trim()}
-      data-entry-complete={isComplete}
+      data-entry-complete={String(isComplete)}
       {...renderProps(rest)}
     >
       {[0, 1, 2, 3, 4].map((slotIndex) => {
@@ -38,7 +38,7 @@ function render(props: BaseProps<EntryProps>) {
         return (
           <Slot
             boardIndex={boardIndex}
-            entryIndex={entryIndex}
+            entryIndex={actualEntryIndex}
             slotIndex={slotIndex}
             keyCap={keyCap}
             isSolution={isSolution}
@@ -57,8 +57,8 @@ function bind(el: HTMLElement, _eventEmitter: any, props: EntryProps): BindRetur
   const { boardIndex, entryIndex, actualEntryIndex } = props
   const stateService = getStateService()
 
-  // Subscribe to entry-specific event
-  const entryEventName = `entry:${boardIndex}:${entryIndex}` as any
+  // Subscribe to entry-specific event using actualEntryIndex
+  const entryEventName = `entry:${boardIndex}:${actualEntryIndex}` as any
   const handleEntryChange = (entry: any) => {
     // Update data-entry-complete attribute
     const isComplete = entry.isCommitted && entry.chars.length === 5

@@ -1,4 +1,5 @@
 import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps, type BindReturn } from "@duct-ui/core/blueprint"
+import autoAnimate from '@formkit/auto-animate'
 import Entry from "./Entry"
 import { type Board as BoardModel, lastEntered } from "@models/entry"
 import { getStateService } from "@services/state-service"
@@ -27,7 +28,7 @@ function render(props: BaseProps<BoardProps>) {
     <div
       class="board"
       data-board-index={boardIndex}
-      data-solved={board.isSolved}
+      data-solved={String(board.isSolved)}
       {...renderProps(rest)}
     >
       {entries.map(([e, entryIndex], i) => (
@@ -53,14 +54,62 @@ function render(props: BaseProps<BoardProps>) {
 }
 
 function bind(el: HTMLElement, _eventEmitter: any, props: BoardProps): BindReturn<BoardLogic> {
-  const { boardIndex } = props
+  const { boardIndex, numberOfRows, screenHeight, screenWidth } = props
   const stateService = getStateService()
+
+  // Enable AutoAnimate for smooth transitions
+  autoAnimate(el)
+
+  // Track current window state
+  let currentStartIndex = 0
 
   // Subscribe to board-specific event
   const boardEventName = `board:${boardIndex}` as any
   const handleBoardChange = (boardState: any) => {
-    const isSolved = boardState.board.isSolved
+    const board = boardState.board
+    const isSolved = board.isSolved
     el.setAttribute('data-solved', String(isSolved))
+
+    // Calculate new entry window
+    const entries = lastEntered(numberOfRows)(board)
+    const newStartIndex = entries.length > 0 ? entries[0][1] : 0
+
+    // Check if window shifted (entries scrolled up)
+    const shiftAmount = newStartIndex - currentStartIndex
+
+    if (shiftAmount > 0) {
+      // Remove top entries (AutoAnimate will animate them out)
+      for (let i = 0; i < shiftAmount; i++) {
+        const firstRow = el.querySelector('.board-entry-row')
+        if (firstRow && firstRow.parentNode === el) {
+          el.removeChild(firstRow)
+        }
+      }
+
+      // Add new entries at bottom
+      const newEntries = entries.slice(-shiftAmount)
+      newEntries.forEach(([e, entryIndex]) => {
+        const rowHTML = (
+          <div class="board-entry-row" data-actual-entry-index={entryIndex}>
+            <div class="board-entry-number">{`${entryIndex + 1}`}</div>
+            {Entry({
+              boardIndex,
+              entryIndex: entryIndex - newStartIndex,
+              actualEntryIndex: entryIndex,
+              entry: e,
+              isSolution: board.isSolved && board.currentIndex === entryIndex,
+              screenHeight,
+              screenWidth
+            })}
+          </div>
+        ) as string
+
+        el.insertAdjacentHTML('beforeend', rowHTML)
+      })
+    }
+
+    // Update tracking
+    currentStartIndex = newStartIndex
   }
 
   stateService.on(boardEventName, handleBoardChange)

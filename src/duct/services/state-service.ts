@@ -19,7 +19,7 @@ import {
   type State,
   type BoardNumber,
 } from "../../models/state"
-import { emptyStreak, type Streak } from "../../models/streak"
+import { emptyStreak, incStreak, type Streak } from "../../models/streak"
 
 // Granular change types
 type SlotChange = {
@@ -189,6 +189,8 @@ export interface StateEvents {
   modeChanged: (mode: BoardNumber) => void
   keyPressed: (key: Key) => void
   invalidEntrySubmitted: () => void
+  zoomChanged: (isZoomed: boolean, currentBoard: number) => void
+  gameCompleted: () => void
   // Granular change events using address pattern: board#entry@slot
   [key: `slot:${number}:${number}:${number}`]: (slotData: any) => void
   [key: `entry:${number}:${number}`]: (entryData: any) => void
@@ -202,12 +204,27 @@ class StateService {
   private dayState: DayState
   private mode: BoardNumber = 'four'
   private results: DayResults
+  private streak: Streak
   private previousState: State | null = null
   private invalidEntryTimeout: ReturnType<typeof setTimeout> | null = null
   private readonly INVALID_ENTRY_TIMEOUT_MS = 1200
+  private isZoomed: boolean = false
+  private currentZoomBoard: number = 0
 
   constructor() {
     this.observable = new Observable()
+
+    // Load streak from localStorage
+    const storedStreak = localStorage.getItem('streak')
+    if (storedStreak) {
+      try {
+        this.streak = JSON.parse(storedStreak)
+      } catch {
+        this.streak = emptyStreak()
+      }
+    } else {
+      this.streak = emptyStreak()
+    }
 
     // Calculate day number
     const dayNumber = pipe(
@@ -245,6 +262,11 @@ class StateService {
     if (storedMode && ['two', 'three', 'four'].includes(storedMode)) {
       this.mode = storedMode as BoardNumber
     }
+
+    // Emit initial state after components have bound (next tick)
+    setTimeout(() => {
+      this.emitChanges()
+    }, 0)
   }
 
   private getWords(dayNumber: number): DayWords {
@@ -290,6 +312,11 @@ class StateService {
       ? computeChanges(this.previousState, currentState)
       : computeAllChanges(currentState)
 
+    // Check if game just completed (only if we have a previous state to compare)
+    const wasCompleted = this.previousState?.isDone || false
+    const isCompleted = currentState.isDone
+    const hadPreviousState = this.previousState !== null
+
     // Store current as previous for next comparison
     this.previousState = JSON.parse(JSON.stringify(currentState))
 
@@ -300,6 +327,20 @@ class StateService {
     this.observable.emit('dayStateChanged', [this.dayState])
     this.observable.emit('stateChanged', [currentState, this.mode])
     this.observable.emit('resultsChanged', [this.results])
+
+    // Emit game completed event only if just completed (not on initial load)
+    if (hadPreviousState && isCompleted && !wasCompleted) {
+      const result = this.results[this.mode]
+      const currentStreak = this.getStreak()
+
+      // Only update streak if solved and not already recorded for this puzzle
+      if (result.isSolved && currentStreak.record[result.mode].lastPuzzle !== result.puzzleNumber) {
+        const updatedStreak = pipe(currentStreak, incStreak(result))
+        this.saveStreak(updatedStreak)
+      }
+
+      this.observable.emit('gameCompleted', [])
+    }
 
     // Phase 3: Check for invalid entries and schedule clearing
     const hasInvalid = this.checkForInvalidEntries(currentState)
@@ -392,19 +433,32 @@ class StateService {
 
   // Streak management
   getStreak(): Streak {
-    const stored = localStorage.getItem('streak')
-    if (stored) {
-      try {
-        return JSON.parse(stored)
-      } catch {
-        return emptyStreak()
-      }
-    }
-    return emptyStreak()
+    return this.streak
   }
 
   saveStreak(streak: Streak) {
+    this.streak = streak
     localStorage.setItem('streak', JSON.stringify(streak))
+  }
+
+  // Zoom management
+  toggleZoom() {
+    this.isZoomed = !this.isZoomed
+    this.observable.emit('zoomChanged', [this.isZoomed, this.currentZoomBoard])
+  }
+
+  setZoomBoard(boardIndex: number) {
+    if (boardIndex >= 0 && boardIndex < this.getCurrentState().boards.length) {
+      this.currentZoomBoard = boardIndex
+      this.observable.emit('zoomChanged', [this.isZoomed, this.currentZoomBoard])
+    }
+  }
+
+  getZoomState(): { isZoomed: boolean; currentBoard: number } {
+    return {
+      isZoomed: this.isZoomed,
+      currentBoard: this.currentZoomBoard
+    }
   }
 
   // Observable pattern - subscribe to events
@@ -434,7 +488,7 @@ export function createStateService(): StateService {
 
 export function getStateService(): StateService {
   if (!stateServiceInstance) {
-    throw new Error('State service not initialized. Call createStateService() first.')
+    stateServiceInstance = new StateService()
   }
   return stateServiceInstance
 }

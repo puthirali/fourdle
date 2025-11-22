@@ -1,8 +1,14 @@
 import { createBlueprint, type BaseComponentEvents, type BaseProps, renderProps, type BindReturn } from "@duct-ui/core/blueprint"
+import { createRef } from "@duct-ui/core/ref"
 import { createStateService } from "@services/state-service"
-import Board from "./Board"
+import GameContainer from "./GameContainer"
 import Keyboard from "./Keyboard"
 import InvalidEntryAlert from "./InvalidEntryAlert"
+import CongratsAlert from "./CongratsAlert"
+import Header from "./Header"
+import HelpModal, { type HelpModalLogic } from "./HelpModal"
+import SummaryModal, { type SummaryModalLogic } from "./SummaryModal"
+import SettingsModal, { type SettingsModalLogic } from "./SettingsModal"
 
 export interface AppEvents extends BaseComponentEvents {}
 
@@ -13,6 +19,10 @@ export interface AppProps {
   'on:release'?: (el: HTMLElement) => void
 }
 
+const helpModalRef = createRef<HelpModalLogic>()
+const summaryModalRef = createRef<SummaryModalLogic>()
+const settingsModalRef = createRef<SettingsModalLogic>()
+
 function render(props: BaseProps<AppProps>) {
   const isAccessible = false // Can be made configurable later
   const accessibleClass = isAccessible ? "accessible" : ""
@@ -20,52 +30,73 @@ function render(props: BaseProps<AppProps>) {
   return (
     <div class={`fourdle-app ${accessibleClass}`.trim()} {...renderProps(props)}>
       <div class="game-container">
-        <div class="header">
-          <h1>Fourdle</h1>
-        </div>
-        <div class="boards-container" data-boards-container>
-          {/* Boards will be rendered in bind() */}
-        </div>
+        <Header
+          on:help-click={() => {
+            const modalLogic = helpModalRef.current
+            if (modalLogic) {
+              modalLogic.open()
+            }
+          }}
+          on:summary-click={() => {
+            const modalLogic = summaryModalRef.current
+            if (modalLogic) {
+              modalLogic.open()
+            }
+          }}
+          on:settings-click={() => {
+            const modalLogic = settingsModalRef.current
+            if (modalLogic) {
+              modalLogic.open()
+            }
+          }}
+          on:zoom-click={() => {
+            // Zoom is already toggled in Header via state service
+          }}
+        />
+        <GameContainer screenHeight="MEDIUM" screenWidth="MEDIUM" numberOfRows={6} />
         <Keyboard screenHeight="MEDIUM" />
         <InvalidEntryAlert />
+        <CongratsAlert />
       </div>
+      <footer class="app-footer">
+        <a href="https://duct-ui.org" target="_blank" rel="noopener noreferrer" class="footer-link">
+          <span>Built with duct-ui</span>
+          <img src="https://duct-ui.org/assets/duct-logo-DTh7D3qn.svg" alt="Duct" class="duct-logo" />
+        </a>
+      </footer>
+      <HelpModal isOpen={false} ref={helpModalRef} />
+      <SummaryModal isOpen={false} ref={summaryModalRef} />
+      <SettingsModal isOpen={false} ref={settingsModalRef} />
     </div>
   )
 }
 
-function bind(el: HTMLElement): BindReturn<AppLogic> {
+function bind(_el: HTMLElement): BindReturn<AppLogic> {
   // Initialize state service (only works in browser where localStorage exists)
   const stateService = createStateService()
-  const boardsContainer = el.querySelector('[data-boards-container]')
+  let summaryTimeout: ReturnType<typeof setTimeout> | null = null
 
-  if (!boardsContainer) {
-    console.error('Boards container not found')
-    return { release: () => {} }
+  // Open summary modal with 2 second delay after game completes
+  const handleGameCompleted = () => {
+    if (summaryTimeout) {
+      clearTimeout(summaryTimeout)
+    }
+    summaryTimeout = setTimeout(() => {
+      const modalLogic = summaryModalRef.current
+      if (modalLogic) {
+        modalLogic.open()
+      }
+    }, 2000)
   }
 
-  // Render boards (they will subscribe to state changes themselves)
-  const state = stateService.getCurrentState()
-  const screenHeight = "MEDIUM"
-  const screenWidth = "MEDIUM"
-  const numberOfRows = 6
-
-  state.boards.forEach((bs, boardIndex) => {
-    const boardHtml = Board({
-      board: bs.board,
-      boardIndex,
-      numberOfRows,
-      screenHeight,
-      screenWidth
-    }) as string
-    boardsContainer.insertAdjacentHTML('beforeend', boardHtml)
-  })
-
-  console.log('Fourdle Duct App initialized!')
-  console.log('Current state:', stateService.getCurrentState())
+  stateService.on('gameCompleted', handleGameCompleted)
 
   return {
     release: () => {
-      console.log('Fourdle Duct App destroyed')
+      stateService.off('gameCompleted', handleGameCompleted)
+      if (summaryTimeout) {
+        clearTimeout(summaryTimeout)
+      }
     }
   }
 }

@@ -75,24 +75,34 @@ export function fromSolution(solution: string): Entry {
 }
 
 export function apply(key: Key) {
-  return (entr: Entry): Entry => {
-    const entry = entr.isInvalid ? emptyEntry() : entr
+  return (entry: Entry): Entry => {
     return Match.value(key).pipe(
-      Match.tag("Char", (ck): Entry =>
-        isComplete(entry)
-          ? entry
-          : {
-              chars: [...entry.chars, ck],
-              isCommitted: false,
-              isInvalid: false,
-            },
-      ),
+      Match.tag("Char", (ck): Entry => {
+        // If entry is invalid, clear it first before adding the character
+        if (entry.isInvalid) {
+          return {
+            chars: [ck],
+            isCommitted: false,
+            isInvalid: false,
+          }
+        }
+        // If entry is complete (and not invalid), don't add more chars
+        if (isComplete(entry)) {
+          return entry
+        }
+        // Otherwise, add the character
+        return {
+          chars: [...entry.chars, ck],
+          isCommitted: false,
+          isInvalid: false,
+        }
+      }),
       Match.tag("Control", (ck): Entry =>
         ck.ctrl === "BACKSPACE"
           ? (pipe(
               O.fromNullable(entry.chars.length > 0 ? entry.chars : null),
               O.map((chars) => chars.slice(0, -1)),
-              O.map((chars) => ({chars})),
+              O.map((chars) => ({chars, isCommitted: false, isInvalid: false})),
               O.getOrElse(emptyEntry),
             ) as Entry)
           : entry,
