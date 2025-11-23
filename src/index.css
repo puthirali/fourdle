@@ -337,8 +337,8 @@ code {
 .board {
   display: flex;
   flex-direction: column;
-  align-content: space-evenly;
-  justify-content: space-evenly;
+  align-content: center;
+  justify-content: center;
   flex-grow: 1;
 }
 
@@ -351,7 +351,7 @@ code {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  flex-grow: 1;
+  flex-grow: 0;
 }
 
 .board[data-solved="true"] .board-entry-row {
@@ -510,8 +510,8 @@ code {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  justify-content: space-evenly;
-  align-content: space-evenly;
+  justify-content: center;
+  align-content: center;
   flex-grow: 1;
   max-width: 1800px;
   width: 100%;
@@ -522,7 +522,7 @@ code {
 [data-stacked-board] {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  flex-grow: 0;
 }
 
 /* Zoom view styles */
