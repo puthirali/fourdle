@@ -54,14 +54,15 @@ function render(props: BaseProps<BoardProps>) {
 }
 
 function bind(el: HTMLElement, _eventEmitter: any, props: BoardProps): BindReturn<BoardLogic> {
-  const { boardIndex, numberOfRows, screenHeight, screenWidth } = props
+  const { board, boardIndex, numberOfRows, screenHeight, screenWidth } = props
   const stateService = getStateService()
 
   // Enable AutoAnimate for smooth transitions
   autoAnimate(el)
 
-  // Track current window state
-  let currentStartIndex = 0
+  // Track current window state - initialize based on what was actually rendered
+  const initialEntries = lastEntered(numberOfRows)(board)
+  let currentStartIndex = initialEntries.length > 0 ? initialEntries[0][1] : 0
 
   // Subscribe to board-specific event
   const boardEventName = `board:${boardIndex}` as any
