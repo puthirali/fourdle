@@ -15,7 +15,6 @@ import {
   fromWords,
   handleClearInvalid,
   handleKeyPress,
-  newGame,
   type State,
   type BoardNumber,
 } from "@models/state"
@@ -388,6 +387,10 @@ class StateService {
   }
 
   setMode(mode: BoardNumber) {
+    if (this.mode === mode) {
+      // No change, don't emit events
+      return
+    }
     this.mode = mode
     localStorage.setItem('game-mode', mode)
     this.observable.emit('modeChanged', [mode])

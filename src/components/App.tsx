@@ -8,7 +8,6 @@ import CongratsAlert from "./CongratsAlert"
 import Header from "./Header"
 import HelpModal, { type HelpModalLogic } from "./HelpModal"
 import SummaryModal, { type SummaryModalLogic } from "./SummaryModal"
-import SettingsModal, { type SettingsModalLogic } from "./SettingsModal"
 
 export interface AppEvents extends BaseComponentEvents {}
 
@@ -21,7 +20,6 @@ export interface AppProps {
 
 const helpModalRef = createRef<HelpModalLogic>()
 const summaryModalRef = createRef<SummaryModalLogic>()
-const settingsModalRef = createRef<SettingsModalLogic>()
 
 function render(props: BaseProps<AppProps>) {
   const isAccessible = false // Can be made configurable later
@@ -43,12 +41,6 @@ function render(props: BaseProps<AppProps>) {
               modalLogic.open()
             }
           }}
-          on:settings-click={() => {
-            const modalLogic = settingsModalRef.current
-            if (modalLogic) {
-              modalLogic.open()
-            }
-          }}
           on:zoom-click={() => {
             // Zoom is already toggled in Header via state service
           }}
@@ -66,7 +58,6 @@ function render(props: BaseProps<AppProps>) {
       </footer>
       <HelpModal isOpen={false} ref={helpModalRef} />
       <SummaryModal isOpen={false} ref={summaryModalRef} />
-      <SettingsModal isOpen={false} ref={settingsModalRef} />
     </div>
   )
 }
